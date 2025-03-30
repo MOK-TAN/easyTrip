@@ -1,7 +1,61 @@
-export default function login(){
-    return (
-        <>
-        This is agent login page  
-        </>
-    )
+"use client";
+import React, { useState } from "react";
+
+export default function Signin() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const [error, setError] = useState("");
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Signed In", formData);
+  };
+
+  return (
+    <div className="flex justify-center items-center h-screen bg-white">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-96 text-center">
+        <h2 className="text-red-800 text-2xl font-bold mb-6">Sign In</h2>
+        {error && <p className="text-red-600 mb-2">{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            value={formData.email}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            value={formData.password}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <button
+            type="submit"
+            className="bg-red-800 text-white p-4 w-full rounded-lg text-lg font-bold hover:bg-red-900"
+          >
+            Sign In
+          </button>
+        </form>
+        <p className="mt-4 text-gray-700">
+          Don't have an account? 
+          <a href="/signup" className="text-red-800 font-bold hover:underline"> Create an account</a>
+        </p>
+      </div>
+    </div>
+  );
 }
+
+
