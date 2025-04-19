@@ -1,61 +1,78 @@
 "use client";
-import React, { useState } from "react";
 
-export default function Signin() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+import {useAuth} from '../../../../context/AuthContext';
+import {useRouter} from 'next/navigation';
 
-  const [error, setError] = useState("");
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Signed In", formData);
-  };
-
+export default function Login() {
   return (
-    <div className="flex justify-center items-center h-screen bg-white">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-96 text-center">
-        <h2 className="text-red-800 text-2xl font-bold mb-6">Sign In</h2>
-        {error && <p className="text-red-600 mb-2">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            value={formData.email}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            value={formData.password}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
-          />
-          <button
-            type="submit"
-            className="bg-red-800 text-white p-4 w-full rounded-lg text-lg font-bold hover:bg-red-900"
-          >
-            Sign In
-          </button>
+    <div className="bg-white min-h-screen flex items-center justify-center py-16 sm:py-24 lg:py-32">
+      <div className="max-w-md w-full px-6 lg:px-8 bg-white rounded-lg shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-900 text-center">Log in to Your Account as Admin</h2>
+        <p className="mt-4 text-lg text-gray-600 text-center">Please enter your credentials to continue.</p>
+
+        <form className="mt-8">
+          {/* Email Field */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              autoComplete="email"
+              required
+              className="mt-2 block w-full py-3 px-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          {/* Password Field */}
+          <div className="mt-6">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              className="mt-2 block w-full py-3 px-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {/* Forgot Password Link */}
+          <div className="mt-2 text-right">
+            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              Forgot your password?
+            </a>
+          </div>
+
+          {/* Submit Button */}
+          <div className="mt-6">
+            <button
+              type="submit"
+              className="w-full py-3 px-4 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              Log in
+            </button>
+          </div>
         </form>
-        <p className="mt-4 text-gray-700">
-          Don't have an account? 
-          <a href="/signup" className="text-red-800 font-bold hover:underline"> Create an account</a>
-        </p>
+
+        {/* Sign up link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Don’t have an account?{" "}
+            <a href="#" className="text-indigo-600 font-semibold hover:text-indigo-700">
+              Sign up
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-
-
