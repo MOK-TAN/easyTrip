@@ -1,120 +1,83 @@
 "use client";
-import React, { useState } from "react";
 
-export default function BusOperatorSignup() {
-  const [formData, setFormData] = useState({
-    companyName: "",
-    licenseNumber: "",
-    operationalRegions: "",
-    phone: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
+import { useState } from "react";
 
-  const [error, setError] = useState("");
-  const [passwordMatchError, setPasswordMatchError] = useState("");
+export default function BusDashboard() {
+  const [buses, setBuses] = useState([
+    { id: 1, name: "Deluxe Express", departure: "08:00 AM", arrival: "02:00 PM", from: "Kathmandu", to: "Pokhara", seats: 40 },
+    { id: 2, name: "Mountain Star", departure: "09:30 AM", arrival: "04:00 PM", from: "Pokhara", to: "Chitwan", seats: 35 },
+  ]);
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [newBus, setNewBus] = useState({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
+  const [editingBus, setEditingBus] = useState(null);
 
-    if (e.target.name === "confirmPassword" || e.target.name === "password") {
-      if (formData.password !== e.target.value && e.target.name === "confirmPassword") {
-        setPasswordMatchError("Passwords do not match");
-      } else {
-        setPasswordMatchError("");
-      }
+  const handleChange = (e) => {
+    setNewBus({ ...newBus, [e.target.name]: e.target.value });
+  };
+
+  const addBus = () => {
+    if (newBus.name && newBus.departure && newBus.arrival && newBus.from && newBus.to && newBus.seats) {
+      setBuses([...buses, { ...newBus, id: Date.now(), seats: Number(newBus.seats) }]);
+      setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-    setError("");
-    console.log("Bus Operator Form Submitted", formData);
+  const deleteBus = (id) => {
+    setBuses(buses.filter(bus => bus.id !== id));
+  };
+
+  const startEdit = (bus) => {
+    setEditingBus(bus);
+    setNewBus(bus);
+  };
+
+  const updateBus = () => {
+    setBuses(buses.map(bus => (bus.id === editingBus.id ? newBus : bus)));
+    setEditingBus(null);
+    setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-white">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-96 text-center">
-        <h2 className="text-blue-800 text-2xl font-bold mb-6">Bus Operator Signup</h2>
-        {error && <p className="text-red-600 mb-2">{error}</p>}
-        {passwordMatchError && <p className="text-red-600 mb-2">{passwordMatchError}</p>}
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="companyName"
-            placeholder="Company Name"
-            required
-            value={formData.companyName}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="text"
-            name="licenseNumber"
-            placeholder="Operator License Number"
-            required
-            value={formData.licenseNumber}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="text"
-            name="operationalRegions"
-            placeholder="Operational Regions (e.g., Kathmandu, Pokhara)"
-            required
-            value={formData.operationalRegions}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="number"
-            name="phone"
-            placeholder="Phone Number"
-            required
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            value={formData.email}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            value={formData.password}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            required
-            value={formData.confirmPassword}
-            onChange={handleInputChange}
-            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-blue-800 focus:ring-2 focus:ring-blue-800"
-          />
-          <button
-            type="submit"
-            className="bg-blue-800 text-white p-4 w-full rounded-lg text-lg font-bold hover:bg-blue-900"
-          >
-            Sign Up
-          </button>
-        </form>
+    <div className="max-w-4xl mx-auto py-10 px-6">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">🚌 Bus Management</h1>
+
+      {/* Add / Edit Form */}
+      <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-lg font-semibold mb-4">{editingBus ? "Edit Bus" : "Add New Bus"}</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <input className="border p-2 rounded" placeholder="Bus Name" name="name" value={newBus.name} onChange={handleChange} />
+          <input className="border p-2 rounded" placeholder="Departure Time" name="departure" value={newBus.departure} onChange={handleChange} />
+          <input className="border p-2 rounded" placeholder="Arrival Time" name="arrival" value={newBus.arrival} onChange={handleChange} />
+          <input className="border p-2 rounded" placeholder="From (Location)" name="from" value={newBus.from} onChange={handleChange} />
+          <input className="border p-2 rounded" placeholder="To (Location)" name="to" value={newBus.to} onChange={handleChange} />
+          <input className="border p-2 rounded" placeholder="Available Seats" type="number" name="seats" value={newBus.seats} onChange={handleChange} />
+        </div>
+        <div className="mt-4">
+          {editingBus ? (
+            <button className="bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={updateBus}>Update Bus</button>
+          ) : (
+            <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={addBus}>Add Bus</button>
+          )}
+        </div>
       </div>
-    </div>
-  );
+
+      {/* Bus List */}
+      <div className="space-y-4">
+        {buses.map((bus) => (
+          <div key={bus.id} className="bg-white p-4 shadow-md rounded-lg flex justify-between items-center">
+            <div>
+              <h3 className="font-semibold text-gray-900">{bus.name}</h3>
+              <p className="text-sm text-gray-600">{bus.from} ➝ {bus.to}</p>
+              <p className="text-sm text-gray-600">Departure: {bus.departure} | Arrival: {bus.arrival}</p>
+              <p className="text-sm text-gray-600">Seats: {bus.seats}</p>
+            </div>
+            <div className="flex gap-2">
+              <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => startEdit(bus)}>Edit</button>
+              <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => deleteBus(bus.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
