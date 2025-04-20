@@ -69,7 +69,7 @@ export default function HotelOwnerDashboard() {
 
       {/* Hotel List */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">List of Hotel</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Hotel List</h2>
         <div className="space-y-4">
           {hotels.map((hotel) => (
             <div key={hotel.id} className="flex justify-between items-center bg-white p-4 shadow-md rounded-lg">
@@ -91,6 +91,6 @@ export default function HotelOwnerDashboard() {
       <div className="mt-8 flex justify-end">
         <button onClick={logout} className="bg-red-600 text-white px-4 py-2 rounded">Log out</button>
       </div>
-    </div>
-  );
+    </div>
+  );
 }

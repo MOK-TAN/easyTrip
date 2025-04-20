@@ -78,6 +78,6 @@ export default function BusDashboard() {
           </div>
         ))}
       </div>
-    </div>
-  );
+    </div>
+  );
 }

@@ -19,7 +19,7 @@ export default function AgentDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-6">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">🕵‍♂ Agent Dashboard</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">🕵️‍♂️ Agent Dashboard</h1>
 
       {/* Booking Form */}
       <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-6">

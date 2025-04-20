@@ -15,13 +15,13 @@ export default function Home() {
       <header className="absolute inset-x-0 top-0 z-50">
         <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div className="flex lg:flex-1 justify-center">
-            <a href="#" className="-m-1.5 p-1.5">
+            <a href="/" className="-m-1.5 p-1.5">
               <span className="text-gray-900">EasyTrip.com</span>
             </a>
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
-            <a href="#" className="text-sm font-semibold text-gray-900">About Us</a>
-            <a href="#" className="text-sm font-semibold text-gray-900">Contact Us</a>
+            <a href="/about" className="text-sm font-semibold text-gray-900">About Us</a>
+            <a href="/contact" className="text-sm font-semibold text-gray-900">Contact Us</a>
             <a href="#" className="text-sm font-semibold text-gray-900">Reviews</a>
             <a href="#" className="text-sm font-semibold text-gray-900">Company</a>
           </div>
@@ -189,6 +189,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Trust Section */}
+      <section className="bg-gray-50 py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Why Book With EasyTrip?</h2>
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900">Best Price Guarantee</h4>
+              <p className="text-sm text-gray-600 mt-2">We offer the lowest prices available. Found a lower price? We’ll match it.</p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900">24/7 Customer Support</h4>
+              <p className="text-sm text-gray-600 mt-2">Our team is here to help you anytime, anywhere.</p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900">Secure Payment</h4>
+              <p className="text-sm text-gray-600 mt-2">Pay safely using Khalti, eSewa, or your debit/credit card.</p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900">Verified Reviews</h4>
+              <p className="text-sm text-gray-600 mt-2">Read honest feedback from real travelers before you book.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="bg-white py-16 sm:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">What Our Travelers Say</h2>
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 p-6 rounded-lg shadow">
+              <p className="text-gray-700 italic">"EasyTrip made our honeymoon seamless. We loved the hotel and the price!"</p>
+              <p className="mt-4 font-semibold text-gray-900">- Sita & Ram</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow">
+              <p className="text-gray-700 italic">"Booking bus tickets and hotels from one site was very convenient."</p>
+              <p className="mt-4 font-semibold text-gray-900">- Binod Thapa</p>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow">
+              <p className="text-gray-700 italic">"The payment options made me feel secure. Loved the experience!"</p>
+              <p className="mt-4 font-semibold text-gray-900">- Anjali Gurung</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer Section */}
       <footer className="bg-gray-800 text-white py-12 mt-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -243,4 +289,4 @@ export default function Home() {
     //   <h5>HOTEL OWNER ROUTES</h5>
     //   <Link href='/hotelowner/signup'>hotelowner sign up</Link><br />
     //   <Link href='/hotelowner/login'>hotelowner login up</Link><br />
-    // </div>
+    // </div>

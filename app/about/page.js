@@ -7,13 +7,13 @@ export default function AboutUs() {
 <header className="absolute inset-x-0 top-0 z-50">
         <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div className="flex lg:flex-1 justify-center">
-            <a href="#" className="-m-1.5 p-1.5">
+            <a href="/" className="-m-1.5 p-1.5">
               <span className="text-gray-900">EasyTrip.com</span>
             </a>
           </div>
           <div className="hidden lg:flex lg:gap-x-12">
-            <a href="#" className="text-sm font-semibold text-gray-900">About Us</a>
-            <a href="#" className="text-sm font-semibold text-gray-900">Contact Us</a>
+            <a href="/about" className="text-sm font-semibold text-gray-900">About Us</a>
+            <a href="/contact" className="text-sm font-semibold text-gray-900">Contact Us</a>
             <a href="#" className="text-sm font-semibold text-gray-900">Reviews</a>
             <a href="#" className="text-sm font-semibold text-gray-900">Company</a>
           </div>
@@ -143,6 +143,6 @@ export default function AboutUs() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>
+  );
 }
