@@ -3,7 +3,7 @@
 import { useAuth } from "../../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 
-export default function SignUp() {
+export default function busoperatorSignUp() {
   return (
     <div className="bg-white min-h-screen flex items-center justify-center py-16 sm:py-24 lg:py-32">
       <div className="max-w-md w-full px-6 lg:px-8 bg-white rounded-lg shadow-lg">
