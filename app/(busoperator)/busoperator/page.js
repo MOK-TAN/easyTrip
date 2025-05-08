@@ -98,7 +98,7 @@ export default function BusDashboard() {
         </div>
       </div>
 
-      {/* Bus List */}
+      {/* Bus List for notification */}
       <div className="space-y-4">
         {buses.map((bus) => (
           <div key={bus.id} className="bg-white p-4 shadow-md rounded-lg flex justify-between items-center">
