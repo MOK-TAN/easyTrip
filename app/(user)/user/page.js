@@ -132,7 +132,7 @@ export default function UserDashboard() {
           </ul>
         </section>
 
-        {/* Payment Section */}
+        {/* Payment Section for git*/}
         <section className="text-center">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Make a Payment</h3>
           <button
