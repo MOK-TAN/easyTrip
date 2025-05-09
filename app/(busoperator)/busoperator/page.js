@@ -3,115 +3,287 @@
 import { useState } from "react";
 
 export default function BusDashboard() {
-  const [buses, setBuses] = useState([
-    { id: 1, name: "Deluxe Express", departure: "08:00 AM", arrival: "02:00 PM", from: "Kathmandu", to: "Pokhara", seats: 40 },
-    { id: 2, name: "Mountain Star", departure: "09:30 AM", arrival: "04:00 PM", from: "Pokhara", to: "Chitwan", seats: 35 },
+  const [vehicles, setVehicles] = useState([
+    {
+      id: 1,
+      type: "Bus",
+      name: "Deluxe Express",
+      departure: "08:00 AM",
+      arrival: "02:00 PM",
+      from: "Kathmandu",
+      to: "Pokhara",
+      seats: 40,
+      ac: true,
+      wifi: true,
+      charging_port: true,
+      vehicle_number: "BA 2 KHA 1234",
+    },
+    {
+      id: 2,
+      type: "Microbus",
+      name: "Speedy Shuttle",
+      departure: "09:00 AM",
+      arrival: "03:00 PM",
+      from: "Pokhara",
+      to: "Chitwan",
+      seats: 20,
+      ac: false,
+      wifi: false,
+      charging_port: false,
+      vehicle_number: "PA 1 KHA 5678",
+    },
+    {
+      id: 3,
+      type: "Jeep",
+      name: "Mountain Rover",
+      departure: "07:30 AM",
+      arrival: "01:00 PM",
+      from: "Kathmandu",
+      to: "Nagarkot",
+      seats: 8,
+      ac: true,
+      wifi: false,
+      charging_port: true,
+      vehicle_number: "KA 3 KHA 7890",
+    },
   ]);
 
-  const [newBus, setNewBus] = useState({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
-  const [editingBus, setEditingBus] = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({
+    type: "",
+    name: "",
+    departure: "",
+    arrival: "",
+    from: "",
+    to: "",
+    seats: "",
+    ac: false,
+    wifi: false,
+    charging_port: false,
+    vehicle_number: "",
+  });
+
+  const [editingVehicle, setEditingVehicle] = useState(null);
 
   const handleChange = (e) => {
-    setNewBus({ ...newBus, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setNewVehicle({
+      ...newVehicle,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
-  const addBus = () => {
-    if (newBus.name && newBus.departure && newBus.arrival && newBus.from && newBus.to && newBus.seats) {
-      setBuses([...buses, { ...newBus, id: Date.now(), seats: Number(newBus.seats) }]);
-      setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
+  const addVehicle = () => {
+    if (
+      newVehicle.type &&
+      newVehicle.name &&
+      newVehicle.departure &&
+      newVehicle.arrival &&
+      newVehicle.from &&
+      newVehicle.to &&
+      newVehicle.seats &&
+      newVehicle.vehicle_number
+    ) {
+      setVehicles([
+        ...vehicles,
+        { ...newVehicle, id: Date.now(), seats: Number(newVehicle.seats) },
+      ]);
+      setNewVehicle({
+        type: "",
+        name: "",
+        departure: "",
+        arrival: "",
+        from: "",
+        to: "",
+        seats: "",
+        ac: false,
+        wifi: false,
+        charging_port: false,
+        vehicle_number: "",
+      });
     }
   };
 
-  const deleteBus = (id) => {
-    setBuses(buses.filter(bus => bus.id !== id));
+  const deleteVehicle = (id) => {
+    setVehicles(vehicles.filter((vehicle) => vehicle.id !== id));
   };
 
-  const startEdit = (bus) => {
-    setEditingBus(bus);
-    setNewBus(bus);
+  const startEdit = (vehicle) => {
+    setEditingVehicle(vehicle);
+    setNewVehicle(vehicle);
   };
 
-  const updateBus = () => {
-    setBuses(buses.map(bus => (bus.id === editingBus.id ? newBus : bus)));
-    setEditingBus(null);
-    setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
-  };
-
-  const handleBooking = (bus) => {
-    const booking = {
-      id: Date.now(),
-      busId: bus.id,
-      busName: bus.name,
-      passengerName: "Demo User",
-    };
-    setBookings([...bookings, booking]);
-    setNotifications([...notifications, `📢 New booking on ${bus.name} by ${booking.passengerName}`]);
+  const updateVehicle = () => {
+    setVehicles(
+      vehicles.map((vehicle) =>
+        vehicle.id === editingVehicle.id ? newVehicle : vehicle
+      )
+    );
+    setEditingVehicle(null);
+    setNewVehicle({
+      type: "",
+      name: "",
+      departure: "",
+      arrival: "",
+      from: "",
+      to: "",
+      seats: "",
+      ac: false,
+      wifi: false,
+      charging_port: false,
+      vehicle_number: "",
+    });
   };
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-6">
-      {/* Header with Bell */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">🚌 Bus Management</h1>
-        <div className="relative">
-          <button onClick={() => setShowNotifications(!showNotifications)} className="relative focus:outline-none">
-            <span className="text-2xl">🔔</span>
-            {notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {notifications.length}
-              </span>
-            )}
-          </button>
-          {showNotifications && notifications.length > 0 && (
-            <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded shadow-lg z-10 p-3">
-              <h2 className="text-sm font-bold mb-2">Notifications</h2>
-              <ul className="max-h-48 overflow-y-auto text-sm space-y-1">
-                {notifications.map((note, i) => (
-                  <li key={i} className="text-gray-800">• {note}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">🚌 Vehicle Management</h1>
 
-      {/* Add/Edit Form */}
+      {/* Add / Edit Form */}
       <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-lg font-semibold mb-4">{editingBus ? "Edit Bus" : "Add New Bus"}</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
+        </h2>
         <div className="grid grid-cols-2 gap-4">
-          <input className="border p-2 rounded" placeholder="Bus Name" name="name" value={newBus.name} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="Departure Time" name="departure" value={newBus.departure} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="Arrival Time" name="arrival" value={newBus.arrival} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="From (Location)" name="from" value={newBus.from} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="To (Location)" name="to" value={newBus.to} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="Available Seats" type="number" name="seats" value={newBus.seats} onChange={handleChange} />
+          <input
+            className="border p-2 rounded"
+            placeholder="Vehicle Type"
+            name="type"
+            value={newVehicle.type}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Vehicle Name"
+            name="name"
+            value={newVehicle.name}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Departure Time"
+            name="departure"
+            value={newVehicle.departure}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Arrival Time"
+            name="arrival"
+            value={newVehicle.arrival}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="From (Location)"
+            name="from"
+            value={newVehicle.from}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="To (Location)"
+            name="to"
+            value={newVehicle.to}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Available Seats"
+            type="number"
+            name="seats"
+            value={newVehicle.seats}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Vehicle Number"
+            name="vehicle_number"
+            value={newVehicle.vehicle_number}
+            onChange={handleChange}
+          />
+          <div className="col-span-2 flex items-center gap-2">
+            <label>
+              <input
+                type="checkbox"
+                name="ac"
+                checked={newVehicle.ac}
+                onChange={handleChange}
+              />
+              AC
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="wifi"
+                checked={newVehicle.wifi}
+                onChange={handleChange}
+              />
+              WiFi
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="charging_port"
+                checked={newVehicle.charging_port}
+                onChange={handleChange}
+              />
+              Charging Port
+            </label>
+          </div>
         </div>
         <div className="mt-4">
-          {editingBus ? (
-            <button className="bg-blue-600 text-white px-4 py-2 rounded mr-2" onClick={updateBus}>Update Bus</button>
+          {editingVehicle ? (
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded mr-2"
+              onClick={updateVehicle}
+            >
+              Update Vehicle
+            </button>
           ) : (
-            <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={addBus}>Add Bus</button>
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded"
+              onClick={addVehicle}
+            >
+              Add Vehicle
+            </button>
           )}
         </div>
       </div>
 
-      {/* Bus List */}
+      {/* Vehicle List */}
       <div className="space-y-4">
-        {buses.map((bus) => (
-          <div key={bus.id} className="bg-white p-4 shadow-md rounded-lg flex justify-between items-center">
+        {vehicles.map((vehicle) => (
+          <div
+            key={vehicle.id}
+            className="bg-white p-4 shadow-md rounded-lg flex justify-between items-center"
+          >
             <div>
-              <h3 className="font-semibold text-gray-900">{bus.name}</h3>
-              <p className="text-sm text-gray-600">{bus.from} ➝ {bus.to}</p>
-              <p className="text-sm text-gray-600">Departure: {bus.departure} | Arrival: {bus.arrival}</p>
-              <p className="text-sm text-gray-600">Seats: {bus.seats}</p>
+              <h3 className="font-semibold text-gray-900">{vehicle.name}</h3>
+              <p className="text-sm text-gray-600">
+                {vehicle.from} ➝ {vehicle.to}
+              </p>
+              <p className="text-sm text-gray-600">
+                Departure: {vehicle.departure} | Arrival: {vehicle.arrival}
+              </p>
+              <p className="text-sm text-gray-600">Seats: {vehicle.seats}</p>
+              <p className="text-sm text-gray-600">Vehicle Number: {vehicle.vehicle_number}</p>
+              <p className="text-sm text-gray-600">
+                AC: {vehicle.ac ? "Yes" : "No"} | WiFi: {vehicle.wifi ? "Yes" : "No"} | Charging Port: {vehicle.charging_port ? "Yes" : "No"}
+              </p>
             </div>
             <div className="flex gap-2">
-              <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => handleBooking(bus)}>Book Seat</button>
-              <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => startEdit(bus)}>Edit</button>
-              <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => deleteBus(bus.id)}>Delete</button>
+              <button
+                className="bg-yellow-500 text-white px-3 py-1 rounded"
+                onClick={() => startEdit(vehicle)}
+              >
+                Edit
+              </button>
+              <button
+                className="bg-red-600 text-white px-3 py-1 rounded"
+                onClick={() => deleteVehicle(vehicle.id)}
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
