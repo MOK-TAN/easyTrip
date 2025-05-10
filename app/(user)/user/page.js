@@ -1,147 +1,173 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '../../../context/AuthContext';
+import Link from 'next/link';
+import Slider from "react-slick"; // Import React Slick
+import { supabase } from "../../../supabase/supabaseClient";
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 export default function UserDashboard() {
-  const [showPayments, setShowPayments] = useState(false);
+  const { user, signOut } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [hotels, setHotels] = useState([]);
+  const [buses, setBuses] = useState([]);
 
-  const wishlist = [
-    {
-      id: 1,
-      name: "Hotel Yak & Yeti",
-      detail: "Luxury stay in the heart of Kathmandu",
-      price: "NPR 12,000 / night",
-    },
-    {
-      id: 2,
-      name: "Hotel Barahi Pokhara",
-      detail: "Lakeside view with premium service",
-      price: "NPR 9,500 / night",
-    },
-  ];
+  // Fetch hotels and buses data (Example for Supabase)
+  useEffect(() => {
+    const fetchHotelsAndBuses = async () => {
+      // Fetch hotels from Supabase
+      const { data: hotelsData, error: hotelsError } = await supabase.from('hotels').select();
+      if (hotelsError) console.error('Error fetching hotels:', hotelsError.message);
+      else setHotels(hotelsData);
 
-  const history = [
-    {
-      id: 101,
-      hotel: "Hotel Himalaya",
-      date: "March 15, 2025",
-      amount: "NPR 10,000",
-    },
-    {
-      id: 102,
-      hotel: "Hotel Annapurna",
-      date: "February 02, 2025",
-      amount: "NPR 11,500",
-    },
-  ];
+      // Fetch buses from Supabase
+      const { data: busesData, error: busesError } = await supabase.from('buses').select();
+      if (busesError) console.error('Error fetching buses:', busesError.message);
+      else setBuses(busesData);
+    };
+
+    fetchHotelsAndBuses();
+  }, []);
+
+  const toggleProfile = () => {
+    setIsProfileOpen(!isProfileOpen);
+  };
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    responsive: [
+      {
+        breakpoint: 640, // Mobile breakpoint
+        settings: {
+          slidesToShow: 1,
+        },
+      },
+      {
+        breakpoint: 1024, // Tablet/Small Desktop
+        settings: {
+          slidesToShow: 2,
+        },
+      },
+      {
+        breakpoint: 1280, // Larger Screens
+        settings: {
+          slidesToShow: 3,
+        },
+      },
+    ],
+  };
 
   return (
-    <div className="bg-white min-h-screen py-16 px-6 sm:py-24 lg:py-32">
-      <div className="max-w-4xl mx-auto space-y-12">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Welcome to Your Dashboard</h2>
-          <p className="mt-2 text-gray-600 text-lg">Manage your wishlist, bookings, and make secure payments.</p>
-        </div>
-
-        {/* Wishlist Section */}
-        <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Wishlist</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {wishlist.map((hotel) => (
-              <div
-                key={hotel.id}
-                className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition"
-              >
-                <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
-                <p className="text-sm text-gray-600 mt-1">{hotel.detail}</p>
-                <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Booking History */}
-        <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Booking History</h3>
-          <ul className="space-y-4">
-            {history.map((entry) => (
-              <li key={entry.id} className="border border-gray-200 rounded-lg p-4 shadow-sm">
-                <p className="font-semibold text-gray-900">{entry.hotel}</p>
-                <p className="text-sm text-gray-600">Date: {entry.date}</p>
-                <p className="text-sm text-gray-700">Paid: {entry.amount}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Payment Section */}
-        <section className="text-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Make a Payment</h3>
-          <button
-            onClick={() => setShowPayments(!showPayments)}
-            className="py-3 px-6 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
-          >
-            Pay Now
-          </button>
-
-          {showPayments && (
-            <div className="mt-6 space-y-4 max-w-sm mx-auto">
-              <button className="w-full py-3 px-4 text-sm font-semibold text-green-700 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 transition">
-                Pay with eSewa
-              </button>
-              <button className="w-full py-3 px-4 text-sm font-semibold text-purple-700 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 transition">
-                Pay with Khalti
-              </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/user" className="text-xl font-bold text-indigo-600">EasyTrip</Link>
             </div>
-          )}
-        </section>
+
+            {/* Profile Dropdown */}
+            <div className="flex items-center">
+              <div className="relative">
+                <button onClick={toggleProfile} className="flex items-center space-x-3 focus:outline-none">
+                  <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
+                    {user?.user_metadata?.full_name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-gray-700">{user?.user_metadata?.full_name || 'User'}</span>
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <Link href="/user/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</Link>
+                    <Link href="/user/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</Link>
+                    <button onClick={signOut} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Sign out</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Dashboard Content */}
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="space-y-12">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Welcome back, {user?.user_metadata?.full_name || 'User'}!</h2>
+            <p className="mt-2 text-gray-600 text-lg">Manage your wishlist, bookings, and make secure payments.</p>
+          </div>
+
+          {/* Hotels Section with Carousel */}
+          <section>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Hotels</h3>
+
+            {/* If screen width > 1024px, show cards side by side; otherwise, use carousel */}
+            <div className="hidden lg:block">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {hotels.map((hotel) => (
+                  <div key={hotel.id} className="bg-white border border-gray-200 rounded-lg shadow p-4">
+                    <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{hotel.description}</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Carousel for smaller screens */}
+            <div className="lg:hidden">
+              <Slider {...settings}>
+                {hotels.map((hotel) => (
+                  <div key={hotel.id} className="bg-white border border-gray-200 rounded-lg shadow p-4">
+                    <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{hotel.description}</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
+                  </div>
+                ))}
+              </Slider>
+            </div>
+          </section>
+
+          {/* Buses Section with Carousel */}
+          <section>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Buses</h3>
+
+            {/* If screen width > 1024px, show cards side by side; otherwise, use carousel */}
+            <div className="hidden lg:block">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {buses.map((bus) => (
+                  <div key={bus.id} className="bg-white border border-gray-200 rounded-lg shadow p-4">
+                    <h4 className="text-lg font-bold text-indigo-700">{bus.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{bus.route}</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-2">{bus.price}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Carousel for smaller screens */}
+            <div className="lg:hidden">
+              <Slider {...settings}>
+                {buses.map((bus) => (
+                  <div key={bus.id} className="bg-white border border-gray-200 rounded-lg shadow p-4">
+                    <h4 className="text-lg font-bold text-indigo-700">{bus.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{bus.route}</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-2">{bus.price}</p>
+                  </div>
+                ))}
+              </Slider>
+            </div>
+          </section>
+
+        </div>
       </div>
-    </div>
-  );
+</div>
+);
 }
-
-
-// "use client";
-
-// import { useState } from "react";
-
-// export default function User() {
-//   const [showOptions, setShowOptions] = useState(false);
-
-//   const togglePaymentOptions = () => {
-//     setShowOptions(!showOptions);
-//   };
-
-//   return (
-//     <div className="bg-white min-h-screen flex items-center justify-center py-16 sm:py-24 lg:py-32">
-//       <div className="max-w-md w-full px-6 lg:px-8 bg-white rounded-lg shadow-lg text-center">
-//         <h2 className="text-3xl font-bold text-gray-900">Welcome, User</h2>
-//         <p className="mt-4 text-lg text-gray-600">You can pay online securely using the button below.</p>
-
-//         <div className="mt-8">
-//           <button
-//             onClick={togglePaymentOptions}
-//             className="w-full py-3 px-4 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-//           >
-//             Pay Online Securely
-//           </button>
-//         </div>
-
-//         {showOptions && (
-//           <div className="mt-6 space-y-4">
-//             <button
-//               className="w-full py-3 px-4 text-sm font-semibold text-green-700 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 transition"
-//             >
-//               Pay with eSewa
-//             </button>
-//             <button
-//               className="w-full py-3 px-4 text-sm font-semibold text-purple-700 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 transition"
-//             >
-//               Pay with Khalti
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
