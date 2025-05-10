@@ -21,57 +21,90 @@ export default function UserDashboard() {
     },
   ]);
 
-  const [history] = useState([
+// <<<<<<< ashriya_rate_review_hotels
+//   const [history] = useState([
+// =======
+  const [bookings, setBookings] = useState([
+// >>>>>>> main
     {
-      id: 101,
-      hotel: "Hotel Himalaya",
-      date: "March 15, 2025",
-      amount: "NPR 10,000",
+      id: 201,
+      hotel: "Hotel Everest View",
+      date: "April 10, 2025",
+      nights: 2,
+      amount: "NPR 20,000",
     },
     {
-      id: 102,
-      hotel: "Hotel Annapurna",
-      date: "February 02, 2025",
-      amount: "NPR 11,500",
+      id: 202,
+      hotel: "Hotel Mechi Crown",
+      date: "May 5, 2025",
+      nights: 3,
+      amount: "NPR 27,000",
     },
   ]);
 
-  const availableHotels = [
-    {
-      id: 201,
-      name: "Hotel Everest View",
-      detail: "Scenic mountain view rooms",
-      price: "NPR 15,000 / night",
-    },
-  ];
+// <<<<<<< ashriya_rate_review_hotels
+//   const availableHotels = [
+//     {
+//       id: 201,
+//       name: "Hotel Everest View",
+//       detail: "Scenic mountain view rooms",
+//       price: "NPR 15,000 / night",
+//     },
+//   ];
 
-  const availableBuses = [
-    {
-      id: 301,
-      name: "Deluxe Express",
-      detail: "Kathmandu to Pokhara",
-      price: "NPR 1,200",
-    },
-  ];
+//   const availableBuses = [
+//     {
+//       id: 301,
+//       name: "Deluxe Express",
+//       detail: "Kathmandu to Pokhara",
+//       price: "NPR 1,200",
+//     },
+//   ];
 
-  const reviews = [
-    {
-      id: 1,
-      type: "hotel",
-      itemId: 201,
-      user: "John Doe",
-      rating: 5,
-      review: "Amazing view and excellent service!",
-    },
-    {
-      id: 2,
-      type: "bus",
-      itemId: 301,
-      user: "Jane Smith",
-      rating: 4,
-      review: "Comfortable ride, but could use more legroom.",
-    },
-  ];
+//   const reviews = [
+//     {
+//       id: 1,
+//       type: "hotel",
+//       itemId: 201,
+//       user: "John Doe",
+//       rating: 5,
+//       review: "Amazing view and excellent service!",
+//     },
+//     {
+//       id: 2,
+//       type: "bus",
+//       itemId: 301,
+//       user: "Jane Smith",
+//       rating: 4,
+//       review: "Comfortable ride, but could use more legroom.",
+//     },
+//   ];
+// =======
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [editForm, setEditForm] = useState({ hotel: "", date: "", nights: "", amount: "" });
+
+  const startEdit = (booking) => {
+    setEditingBooking(booking.id);
+    setEditForm({ ...booking });
+  };
+
+  const cancelBooking = (id) => {
+    setBookings(bookings.filter((b) => b.id !== id));
+    if (editingBooking === id) {
+      setEditingBooking(null);
+    }
+  };
+
+  const handleEditChange = (e) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const saveEdit = () => {
+    setBookings(bookings.map((b) => (b.id === editingBooking ? { ...editForm, id: editingBooking } : b)));
+    setEditingBooking(null);
+    setEditForm({ hotel: "", date: "", nights: "", amount: "" });
+  };
+// >>>>>>> main
 
   const [newReview, setNewReview] = useState({
     type: "",
@@ -110,6 +143,7 @@ export default function UserDashboard() {
         <section>
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Wishlist</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
             {wishlist.map((item) => (
               <div key={`${item.type}-${item.id}`} className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition">
                 <h4 className="text-lg font-bold text-indigo-700">{item.name}</h4>
@@ -168,55 +202,83 @@ export default function UserDashboard() {
                   ))}
                 </div>
                 <p className="text-sm text-gray-600 mt-2">{review.review}</p>
+
+            {wishlist.map((hotel) => (
+              <div key={hotel.id} className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition">
+                <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
+                <p className="text-sm text-gray-600 mt-1">{hotel.detail}</p>
+                <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
+
               </div>
             ))}
           </div>
         </section>
 
-        {/* Add Review Section */}
-        <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Add a Review</h3>
-          <div className="border p-6 rounded shadow">
-            <input
-              type="text"
-              placeholder="Your Name"
-              value={newReview.user}
-              onChange={(e) => setNewReview({ ...newReview, user: e.target.value })}
-              className="border p-2 rounded mb-4 w-full"
-            />
-            <textarea
-              placeholder="Your Review"
-              value={newReview.review}
-              onChange={(e) => setNewReview({ ...newReview, review: e.target.value })}
-              className="border p-2 rounded mb-4 w-full"
-            />
-            <div className="flex items-center gap-2 mb-4">
-              <label>Rating: </label>
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  onClick={() => setNewReview({ ...newReview, rating: i + 1 })}
-                  className={i < newReview.rating ? "text-yellow-400 cursor-pointer" : "text-gray-300 cursor-pointer"}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
-            <button onClick={submitReview} className="py-2 px-4 bg-indigo-600 text-white rounded-lg">
-              Submit Review
-            </button>
-          </div>
-        </section>
 
-        {/* Booking History */}
+
+
+        {/* Booking History (View/Edit/Cancel) */}
+
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Booking History</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Bookings</h3>
           <ul className="space-y-4">
-            {history.map((entry) => (
+            {bookings.map((entry) => (
               <li key={entry.id} className="border border-gray-200 rounded-lg p-4 shadow-sm">
-                <p className="font-semibold text-gray-900">{entry.hotel}</p>
-                <p className="text-sm text-gray-600">Date: {entry.date}</p>
-                <p className="text-sm text-gray-700">Paid: {entry.amount}</p>
+                {editingBooking === entry.id ? (
+                  <div className="space-y-2">
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="hotel"
+                      value={editForm.hotel}
+                      onChange={handleEditChange}
+                      placeholder="Hotel Name"
+                    />
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="date"
+                      value={editForm.date}
+                      onChange={handleEditChange}
+                      placeholder="Booking Date"
+                    />
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="nights"
+                      value={editForm.nights}
+                      onChange={handleEditChange}
+                      placeholder="Nights"
+                    />
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="amount"
+                      value={editForm.amount}
+                      onChange={handleEditChange}
+                      placeholder="Amount"
+                    />
+                    <div className="flex gap-2">
+                      <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={saveEdit}>
+                        Save
+                      </button>
+                      <button className="bg-gray-300 text-gray-800 px-3 py-1 rounded" onClick={() => setEditingBooking(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-semibold text-gray-900">{entry.hotel}</p>
+                    <p className="text-sm text-gray-600">Date: {entry.date}</p>
+                    <p className="text-sm text-gray-600">Nights: {entry.nights}</p>
+                    <p className="text-sm text-gray-700">Paid: {entry.amount}</p>
+                    <div className="flex gap-2 mt-2">
+                      <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => startEdit(entry)}>
+                        Modify
+                      </button>
+                      <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => cancelBooking(entry.id)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>
@@ -243,6 +305,16 @@ export default function UserDashboard() {
             </div>
           )}
         </section>
+{/* Share Details Section */}
+<section className="text-center">
+  <button
+    onClick={() => alert("Your details have been shared successfully!")}
+    className="mt-6 py-3 px-6 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+  >
+    Share My Details
+  </button>
+</section>
+
       </div>
     </div>
   );
