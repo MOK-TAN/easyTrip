@@ -1,177 +1,110 @@
 "use client";
+import { createContext, useState, useContext } from "react";
+import { supabase } from '../supabase/supabaseClient';
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useHotelOwnerContext } from "@/context/HotelOwnerContext";
-import { useRouter } from "next/navigation";
+const HotelOwnerContext = createContext();
 
-export default function HotelOwnerDashboard() {
-  const { user, signOut } = useAuth();
-  const router = useRouter();
 
-  const {
-    hotels,
-    fetchHotels,
-    addHotel,
-    updateHotel,
-    deleteHotel
-  } = useHotelOwnerContext();
+export const HotelOwnerProvider = ({ children }) => {
+  const [hotels, setHotels] = useState([]);
 
-  console.log("data hotel", user);
+  // 🔄 Fetch hotels owned by the logged-in user
+  const fetchHotels = async () => {
+    // const user = supabase.auth.getUser();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    location: "",
-    price: "",
-    description: "" // Add description field here
-  });
-  const [editingHotelId, setEditingHotelId] = useState(null);
+     const { data: user, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    console.error("User not authenticated or error fetching user", userError);
+    return;
+  }
 
-  // Check login and fetch hotels
-  useEffect(() => {
-    if (user === false) {
-      router.push("/hotelowner/login");
-    } else if (user) {
-      fetchHotels(); // fetch hotels from Supabase
+    console.log("user from hotel auth", user.user.id);
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("hotels")
+      .select("*")
+      .eq("hotel_owner_id", user.user.id);
+
+
+      console.log("hotels data", data);
+
+    if (error) {
+      console.error("Error fetching hotels:", JSON.stringify(error, null, 2));
+
+    } else {
+      setHotels(data || []);
     }
-  }, [user, router]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
   };
 
-  const handleAddHotel = async () => {
-    if (!formData.name || !formData.location || !formData.price || !formData.description) return;
+  // ➕ Add a new hotel
+  const addHotel = async (newHotel) => {
+    
+     const { data: user, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !user) {
+    console.error("User not authenticated or error fetching user", userError);
+    return;
+  }
 
-    await addHotel({
-      name: formData.name,
-      location: formData.location,
-      price: parseFloat(formData.price),
-      description: formData.description, // Add description to hotel
-      hotel_owner_id : user.id
-    });
+    const { data, error } = await supabase
+      .from("hotels")
+      .insert([
+        {
+          ...newHotel,
+          hotel_owner_id: user.user.id,
+        },
+      ])
+      .select();
 
-    setFormData({ name: "", location: "", price: "", description: "" });
+    if (error) {
+      console.error("Error adding hotel:", error);
+    } else {
+      setHotels([...hotels, data[0]]);
+    }
   };
 
-  const handleEditHotel = (hotel) => {
-    setEditingHotelId(hotel.id);
-    setFormData({
-      name: hotel.name,
-      location: hotel.location,
-      price: hotel.price.toString(),
-      description: hotel.description // Set description when editing
-    });
+  // ✏ Update existing hotel
+  const updateHotel = async (id, updatedData) => {
+    const { data, error } = await supabase
+      .from("hotels")
+      .update(updatedData)
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      console.error("Error updating hotel:", error);
+    } else {
+      setHotels(hotels.map((hotel) => (hotel.id === id ? data[0] : hotel)));
+    }
   };
 
-  const handleUpdateHotel = async () => {
-    await updateHotel(editingHotelId, {
-      name: formData.name,
-      location: formData.location,
-      price: parseFloat(formData.price),
-      description: formData.description // Update description
-    });
+  // ❌ Delete hotel by ID
+  const deleteHotel = async (id) => {
+    const { error } = await supabase.from("hotels").delete().eq("id", id);
 
-    setFormData({ name: "", location: "", price: "", description: "" });
-    setEditingHotelId(null);
-  };
-
-  const handleDeleteHotel = async (id) => {
-    await deleteHotel(id);
+    if (error) {
+      console.error("Error deleting hotel:", error);
+    } else {
+      setHotels(hotels.filter((hotel) => hotel.id !== id));
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6">
-      <h1 className="text-2xl font-semibold text-gray-900">🏨 Hotel Owner Dashboard</h1>
-
-      {/* Hotel Form */}
-      <div className="bg-gray-100 p-6 rounded-lg shadow-md mt-6">
-        <h2 className="text-lg font-semibold mb-4">
-          {editingHotelId ? "Edit Hotel" : "Add Hotel"}
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            className="border p-2 rounded"
-            placeholder="Hotel Name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <input
-            className="border p-2 rounded"
-            placeholder="Location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-          />
-          <input
-            className="border p-2 rounded"
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            placeholder="Price"
-          />
-          <textarea
-            className="border p-2 rounded col-span-2"
-            placeholder="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          />
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded col-span-2"
-            onClick={editingHotelId ? handleUpdateHotel : handleAddHotel}
-          >
-            {editingHotelId ? "Update Hotel" : "Add Hotel"}
-          </button>
-        </div>
-      </div>
-
-      {/* Hotel List */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Hotel List</h2>
-        <div className="space-y-4">
-          {hotels.map((hotel) => (
-            <div
-              key={hotel.id}
-              className="flex justify-between items-center bg-white p-4 shadow-md rounded-lg"
-            >
-              <div>
-                <h3 className="font-semibold text-gray-900">{hotel.name}</h3>
-                <p className="text-sm text-gray-600">Location: {hotel.location}</p>
-                <p className="text-sm text-gray-600">Price: ${hotel.price}</p>
-                <p className="text-sm text-gray-600">Description: {hotel.description}</p> {/* Display description */}
-              </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => handleEditHotel(hotel)}
-                  className="text-blue-500 hover:text-blue-700 text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteHotel(hotel.id)}
-                  className="text-red-500 hover:text-red-700 text-sm"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Logout Button */}
-      <div className="mt-8 flex justify-end">
-        <button
-          onClick={signOut}
-          className="bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Log out
-        </button>
-      </div>
-    </div>
+    <HotelOwnerContext.Provider
+      value={{
+        hotels,
+        fetchHotels,
+        addHotel,
+        updateHotel,
+        deleteHotel,
+      }}
+    >
+      {children}
+    </HotelOwnerContext.Provider>
   );
-}
+};
+
+
+export const useHotelOwnerContext = () => useContext(HotelOwnerContext);
