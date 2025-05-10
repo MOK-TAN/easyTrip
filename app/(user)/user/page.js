@@ -54,10 +54,47 @@ export default function UserDashboard() {
     },
   ];
 
+  const reviews = [
+    {
+      id: 1,
+      type: "hotel",
+      itemId: 201,
+      user: "John Doe",
+      rating: 5,
+      review: "Amazing view and excellent service!",
+    },
+    {
+      id: 2,
+      type: "bus",
+      itemId: 301,
+      user: "Jane Smith",
+      rating: 4,
+      review: "Comfortable ride, but could use more legroom.",
+    },
+  ];
+
+  const [newReview, setNewReview] = useState({
+    type: "",
+    itemId: null,
+    user: "",
+    rating: 1,
+    review: "",
+  });
+
   const addToWishlist = (item, type) => {
     const exists = wishlist.find((w) => w.id === item.id && w.type === type);
     if (!exists) {
       setWishlist([...wishlist, { ...item, type }]);
+    }
+  };
+
+  const submitReview = () => {
+    if (newReview.user && newReview.review && newReview.rating > 0) {
+      setNewReview({ type: "", itemId: null, user: "", rating: 1, review: "" });
+      setReviews([
+        ...reviews,
+        { ...newReview, id: Date.now() },
+      ]);
     }
   };
 
@@ -118,6 +155,59 @@ export default function UserDashboard() {
           </div>
         </section>
 
+        {/* Reviews Section */}
+        <section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Reviews</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {reviews.map((review) => (
+              <div key={review.id} className="border p-4 rounded shadow">
+                <h4 className="text-lg font-semibold">{review.user}</h4>
+                <div className="flex items-center gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={i < review.rating ? "text-yellow-400" : "text-gray-300"}>★</span>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">{review.review}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Add Review Section */}
+        <section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Add a Review</h3>
+          <div className="border p-6 rounded shadow">
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={newReview.user}
+              onChange={(e) => setNewReview({ ...newReview, user: e.target.value })}
+              className="border p-2 rounded mb-4 w-full"
+            />
+            <textarea
+              placeholder="Your Review"
+              value={newReview.review}
+              onChange={(e) => setNewReview({ ...newReview, review: e.target.value })}
+              className="border p-2 rounded mb-4 w-full"
+            />
+            <div className="flex items-center gap-2 mb-4">
+              <label>Rating: </label>
+              {[...Array(5)].map((_, i) => (
+                <span
+                  key={i}
+                  onClick={() => setNewReview({ ...newReview, rating: i + 1 })}
+                  className={i < newReview.rating ? "text-yellow-400 cursor-pointer" : "text-gray-300 cursor-pointer"}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <button onClick={submitReview} className="py-2 px-4 bg-indigo-600 text-white rounded-lg">
+              Submit Review
+            </button>
+          </div>
+        </section>
+
         {/* Booking History */}
         <section>
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Booking History</h3>
@@ -132,7 +222,7 @@ export default function UserDashboard() {
           </ul>
         </section>
 
-        {/* Payment Section for git*/}
+        {/* Payment Section */}
         <section className="text-center">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Make a Payment</h3>
           <button
