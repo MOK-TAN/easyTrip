@@ -1,53 +1,98 @@
 "use client";
+import React, { useState } from "react";
 
-import { useState } from "react";
+export default function AgentSignup() {
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
 
-export default function AgentDashboard() {
-  const [bookings, setBookings] = useState([]);
-  const [newBooking, setNewBooking] = useState({ customer: "", from: "", to: "", date: "", seats: 1 });
+  const [error, setError] = useState("");
+  const [passwordMatchError, setPasswordMatchError] = useState("");
 
-  const handleChange = (e) => {
-    setNewBooking({ ...newBooking, [e.target.name]: e.target.value });
-  };
-
-  const bookTicket = () => {
-    if (newBooking.customer && newBooking.from && newBooking.to && newBooking.date && newBooking.seats > 0) {
-      setBookings([...bookings, { ...newBooking, id: Date.now() }]);
-      setNewBooking({ customer: "", from: "", to: "", date: "", seats: 1 });
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === "confirmPassword" || e.target.name === "password") {
+      if (formData.password !== e.target.value && e.target.name === "confirmPassword") {
+        setPasswordMatchError("Passwords do not match");
+      } else {
+        setPasswordMatchError("");
+      }
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    setError("");
+    console.log("Agent Form Submitted", formData);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto py-10 px-6">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">🕵️‍♂️ Agent Dashboard</h1>
-
-      {/* Booking Form */}
-      <div className="bg-gray-100 p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-lg font-semibold mb-4">Book Ticket</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <input className="border p-2 rounded" placeholder="Customer Name" name="customer" value={newBooking.customer} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="From (Location)" name="from" value={newBooking.from} onChange={handleChange} />
-          <input className="border p-2 rounded" placeholder="To (Location)" name="to" value={newBooking.to} onChange={handleChange} />
-          <input className="border p-2 rounded" type="date" name="date" value={newBooking.date} onChange={handleChange} />
-          <input className="border p-2 rounded" type="number" min="1" name="seats" placeholder="Seats" value={newBooking.seats} onChange={handleChange} />
-        </div>
-        <button className="bg-green-600 text-white px-4 py-2 rounded mt-4" onClick={bookTicket}>Book Ticket</button>
-      </div>
-
-      {/* Bookings List */}
-      <div className="space-y-4">
-        {bookings.map((booking) => (
-          <div key={booking.id} className="bg-white p-4 shadow-md rounded-lg flex justify-between items-center">
-            <div>
-              <h3 className="font-semibold text-gray-900">{booking.customer}</h3>
-              <p className="text-sm text-gray-600">{booking.from} ➝ {booking.to}</p>
-              <p className="text-sm text-gray-600">Date: {booking.date} | Seats: {booking.seats}</p>
-            </div>
-            <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => setBookings(bookings.filter(b => b.id !== booking.id))}>
-              Cancel
-            </button>
-          </div>
-        ))}
+    <div className="flex justify-center items-center h-screen bg-white">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-96 text-center">
+        <h2 className="text-red-800 text-2xl font-bold mb-6">Agent Signup</h2>
+        {error && <p className="text-red-600 mb-2">{error}</p>}
+        {passwordMatchError && <p className="text-red-600 mb-2">{passwordMatchError}</p>}
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            required
+            value={formData.name}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <input
+            type="number"
+            name="phone"
+            placeholder="Phone Number"
+            required
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            value={formData.email}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            value={formData.password}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            required
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            className="w-full p-4 my-3 border-2 border-gray-300 rounded-lg text-lg outline-none text-black focus:border-red-800 focus:ring-2 focus:ring-red-800"
+          />
+          <button
+            type="submit"
+            className="bg-red-800 text-white p-4 w-full rounded-lg text-lg font-bold hover:bg-red-900"
+          >
+            Sign Up
+          </button>
+        </form>
       </div>
     </div>
   );
