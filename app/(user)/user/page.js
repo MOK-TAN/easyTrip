@@ -4,23 +4,28 @@ import { useState } from "react";
 
 export default function UserDashboard() {
   const [showPayments, setShowPayments] = useState(false);
-
-  const wishlist = [
+  const [wishlist, setWishlist] = useState([
     {
       id: 1,
+      type: "hotel",
       name: "Hotel Yak & Yeti",
       detail: "Luxury stay in the heart of Kathmandu",
       price: "NPR 12,000 / night",
     },
     {
       id: 2,
+      type: "hotel",
       name: "Hotel Barahi Pokhara",
       detail: "Lakeside view with premium service",
       price: "NPR 9,500 / night",
     },
-  ];
+  ]);
 
+// <<<<<<< ashriya_rate_review_hotels
+//   const [history] = useState([
+// =======
   const [bookings, setBookings] = useState([
+// >>>>>>> main
     {
       id: 201,
       hotel: "Hotel Everest View",
@@ -37,6 +42,44 @@ export default function UserDashboard() {
     },
   ]);
 
+// <<<<<<< ashriya_rate_review_hotels
+//   const availableHotels = [
+//     {
+//       id: 201,
+//       name: "Hotel Everest View",
+//       detail: "Scenic mountain view rooms",
+//       price: "NPR 15,000 / night",
+//     },
+//   ];
+
+//   const availableBuses = [
+//     {
+//       id: 301,
+//       name: "Deluxe Express",
+//       detail: "Kathmandu to Pokhara",
+//       price: "NPR 1,200",
+//     },
+//   ];
+
+//   const reviews = [
+//     {
+//       id: 1,
+//       type: "hotel",
+//       itemId: 201,
+//       user: "John Doe",
+//       rating: 5,
+//       review: "Amazing view and excellent service!",
+//     },
+//     {
+//       id: 2,
+//       type: "bus",
+//       itemId: 301,
+//       user: "Jane Smith",
+//       rating: 4,
+//       review: "Comfortable ride, but could use more legroom.",
+//     },
+//   ];
+// =======
   const [editingBooking, setEditingBooking] = useState(null);
   const [editForm, setEditForm] = useState({ hotel: "", date: "", nights: "", amount: "" });
 
@@ -61,6 +104,32 @@ export default function UserDashboard() {
     setEditingBooking(null);
     setEditForm({ hotel: "", date: "", nights: "", amount: "" });
   };
+// >>>>>>> main
+
+  const [newReview, setNewReview] = useState({
+    type: "",
+    itemId: null,
+    user: "",
+    rating: 1,
+    review: "",
+  });
+
+  const addToWishlist = (item, type) => {
+    const exists = wishlist.find((w) => w.id === item.id && w.type === type);
+    if (!exists) {
+      setWishlist([...wishlist, { ...item, type }]);
+    }
+  };
+
+  const submitReview = () => {
+    if (newReview.user && newReview.review && newReview.rating > 0) {
+      setNewReview({ type: "", itemId: null, user: "", rating: 1, review: "" });
+      setReviews([
+        ...reviews,
+        { ...newReview, id: Date.now() },
+      ]);
+    }
+  };
 
   return (
     <div className="bg-white min-h-screen py-16 px-6 sm:py-24 lg:py-32">
@@ -74,17 +143,82 @@ export default function UserDashboard() {
         <section>
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Wishlist</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {wishlist.map((hotel) => (
-              <div key={hotel.id} className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition">
-                <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
-                <p className="text-sm text-gray-600 mt-1">{hotel.detail}</p>
-                <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
+
+            {wishlist.map((item) => (
+              <div key={`${item.type}-${item.id}`} className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition">
+                <h4 className="text-lg font-bold text-indigo-700">{item.name}</h4>
+                <p className="text-sm text-gray-500 capitalize">{item.type}</p>
+                <p className="text-sm text-gray-600 mt-1">{item.detail}</p>
+                <p className="text-sm font-semibold text-gray-800 mt-2">{item.price}</p>
               </div>
             ))}
           </div>
         </section>
 
+        {/* Available Hotels */}
+        <section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Available Hotels</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {availableHotels.map((hotel) => (
+              <div key={hotel.id} className="border p-4 rounded shadow">
+                <h4 className="text-lg font-bold">{hotel.name}</h4>
+                <p className="text-sm text-gray-600">{hotel.detail}</p>
+                <p className="text-sm">{hotel.price}</p>
+                <button onClick={() => addToWishlist(hotel, "hotel")} className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded">
+                  Add to Wishlist
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Available Buses */}
+        <section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Available Buses</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {availableBuses.map((bus) => (
+              <div key={bus.id} className="border p-4 rounded shadow">
+                <h4 className="text-lg font-bold">{bus.name}</h4>
+                <p className="text-sm text-gray-600">{bus.detail}</p>
+                <p className="text-sm">{bus.price}</p>
+                <button onClick={() => addToWishlist(bus, "bus")} className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded">
+                  Add to Wishlist
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Reviews Section */}
+        <section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Reviews</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {reviews.map((review) => (
+              <div key={review.id} className="border p-4 rounded shadow">
+                <h4 className="text-lg font-semibold">{review.user}</h4>
+                <div className="flex items-center gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={i < review.rating ? "text-yellow-400" : "text-gray-300"}>★</span>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">{review.review}</p>
+
+            {wishlist.map((hotel) => (
+              <div key={hotel.id} className="bg-white border border-gray-200 rounded-lg shadow p-4 hover:shadow-md transition">
+                <h4 className="text-lg font-bold text-indigo-700">{hotel.name}</h4>
+                <p className="text-sm text-gray-600 mt-1">{hotel.detail}</p>
+                <p className="text-sm font-semibold text-gray-800 mt-2">{hotel.price}</p>
+
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+
+
         {/* Booking History (View/Edit/Cancel) */}
+
         <section>
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Your Bookings</h3>
           <ul className="space-y-4">
