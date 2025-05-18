@@ -65,7 +65,6 @@ export const HotelOwnerProvider = ({ children }) => {
     }
   };
 
-  // ✏ Update existing hotel
   const updateHotel = async (id, updatedData) => {
     const { data, error } = await supabase
       .from("hotels")
