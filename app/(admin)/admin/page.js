@@ -1,92 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAdmin } from "../../../context/adminContext"; // Adjust path as needed
+
+import { useAuth } from "@/context/AuthContext";
 
 const AdminDashboard = () => {
-  // Dummy data
-  const [agents, setAgents] = useState([
-    { id: 1, name: "Agent A", email: "agentA@example.com" },
-    { id: 2, name: "Agent B", email: "agentB@example.com" },
-  ]);
-  const [users, setUsers] = useState([
-    { id: 1, name: "User X", email: "userX@example.com" },
-    { id: 2, name: "User Y", email: "userY@example.com" },
-  ]);
-  const [hotelOwners, setHotelOwners] = useState([
-    { id: 1, name: "Owner 1", email: "owner1@example.com" },
-    { id: 2, name: "Owner 2", email: "owner2@example.com" },
-  ]);
-  const [busOperators, setBusOperators] = useState([
-    { id: 1, name: "Bus Operator 1", email: "bus1@example.com" },
-    { id: 2, name: "Bus Operator 2", email: "bus2@example.com" },
-  ]);
-
-  const [formData, setFormData] = useState({ name: "", email: "" });
+  const { usersByRole, fetchUsers, loading, createUser, updateUser, deleteUser } = useAdmin();
+  const [formData, setFormData] = useState({ email: "", full_name: "", phone_number: "", role: "user", password: "" });
   const [editingId, setEditingId] = useState(null);
-  const [currentCategory, setCurrentCategory] = useState("agents");
+  const [currentCategory, setCurrentCategory] = useState("users");
 
-  // Handle form input changes
+    
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle add or update
   const handleSave = () => {
-    const newItem = {
-      id: editingId || Math.random(),
-      name: formData.name,
-      email: formData.email,
-    };
-
-    const setData = {
-      agents: setAgents,
-      users: setUsers,
-      hotelOwners: setHotelOwners,
-      busOperators: setBusOperators,
-    }[currentCategory];
-
-    setData((prev) =>
-      editingId ? prev.map((item) => (item.id === editingId ? newItem : item)) : [...prev, newItem]
-    );
-
-    setFormData({ name: "", email: "" });
+    if (editingId) {
+      updateUser({
+        id: editingId,
+        email: formData.email,
+        full_name: formData.full_name,
+        phone_number: formData.phone_number,
+        role: formData.role,
+      });
+    } else {
+      createUser(formData);
+    }
+    setFormData({ email: "", full_name: "", phone_number: "", role: "user", password: "" });
     setEditingId(null);
   };
 
-  // Handle edit
-  const handleEdit = (item) => {
-    setEditingId(item.id);
-    setFormData({ name: item.name, email: item.email });
+  const handleEdit = (user) => {
+    setEditingId(user.id);
+    setFormData({
+      email: user.email,
+      full_name: user.full_name,
+      phone_number: user.phone_number,
+      role: user.role,
+      password: "",
+    });
   };
 
-  // Handle delete
   const handleDelete = (id) => {
-    const setData = {
-      agents: setAgents,
-      users: setUsers,
-      hotelOwners: setHotelOwners,
-      busOperators: setBusOperators,
-    }[currentCategory];
-
-    setData((prev) => prev.filter((item) => item.id !== id));
+    deleteUser(id);
   };
 
   return (
-    <div className="bg-white p-8 max-w-4xl mx-auto"> {/* Centered layout */}
+    <div className="bg-white p-8 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold text-gray-900 text-center">Admin Dashboard</h1>
 
       {/* Tabs */}
       <div className="flex justify-center space-x-6 mt-6">
-        {["agents", "users", "hotelOwners", "busOperators"].map((category) => (
+        {["users", "agents", "hotelOwners", "busOperators"].map((category) => (
           <button
             key={category}
             onClick={() => setCurrentCategory(category)}
-            className={`text-sm font-semibold px-4 py-2 rounded-md transition ${
-    currentCategory === category ? "bg-blue-500 text-white" : "text-gray-900 hover:bg-gray-200"
-  }`}
+            className={`text-sm font-semibold px-4 py-2 rounded-md transition ${currentCategory === category ? "bg-blue-500 text-white" : "text-gray-900 hover:bg-gray-200"}`}
           >
-            {category.replace(/([A-Z])/g, " $1").trim()}
+            {category}
           </button>
         ))}
       </div>
@@ -96,23 +76,49 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">{editingId ? "Edit" : "Add"} {currentCategory}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Name"
-            className="p-4 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-          />
-          <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             placeholder="Email"
-            className="p-4 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+            className="p-4 border border-gray-300 rounded-md text-sm"
+          />
+          <input
+            type="text"
+            name="full_name"
+            value={formData.full_name}
+            onChange={handleChange}
+            placeholder="Full Name"
+            className="p-4 border border-gray-300 rounded-md text-sm"
+          />
+          <input
+            type="text"
+            name="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            placeholder="Phone Number"
+            className="p-4 border border-gray-300 rounded-md text-sm"
+          />
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="p-4 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="user">User</option>
+            <option value="hotel_owner">Hotel Owner</option>
+            <option value="bus_operator">Bus Operator</option>
+            <option value="agent">Agent</option>
+          </select>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Password"
+            className="p-4 border border-gray-300 rounded-md text-sm"
           />
           <button
-            type="button"
             onClick={handleSave}
             className="px-6 py-3 bg-blue-500 text-white rounded-md text-sm font-semibold mt-4 w-full"
           >
@@ -122,27 +128,26 @@ const AdminDashboard = () => {
       </div>
 
       {/* List */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">{currentCategory} List</h2>
+      <div className="mt-8 bg-white p-6 rounded-md shadow-lg">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Users</h2>
         <div className="space-y-4">
-          {(
-            { agents, users, hotelOwners, busOperators }[currentCategory]
-          ).map((item) => (
-            <div key={item.id} className="flex justify-between items-center bg-gray-100 p-6 rounded-md">
+          {usersByRole[currentCategory].map((user) => (
+            <div key={user.id} className="flex justify-between items-center p-4 border-b">
               <div>
-                <p className="font-semibold text-gray-900">{item.name}</p>
-                <p className="text-sm text-gray-600">{item.email}</p>
+                <h3 className="text-xl font-semibold">{user.full_name}</h3>
+                <p className="text-gray-500">{user.email}</p>
+                <p className="text-gray-500">{user.role}</p>
               </div>
-              <div className="flex space-x-4">
+              <div className="flex space-x-2">
                 <button
-                  onClick={() => handleEdit(item)}
-                  className="text-blue-500 hover:text-blue-700 text-sm"
+                  onClick={() => handleEdit(user)}
+                  className="text-sm font-semibold text-blue-600 hover:underline"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(item.id)}
-                  className="text-red-500 hover:text-red-700 text-sm"
+                  onClick={() => handleDelete(user.id)}
+                  className="text-sm font-semibold text-red-600 hover:underline"
                 >
                   Delete
                 </button>
@@ -151,6 +156,16 @@ const AdminDashboard = () => {
           ))}
         </div>
       </div>
+    
+     <div className="mt-8 flex justify-end">
+        <button
+          onClick={signOut}
+          className="bg-red-600 text-white px-4 py-2 rounded"
+        >
+          Log out
+        </button>
+        </div>
+    
     </div>
   );
 };
