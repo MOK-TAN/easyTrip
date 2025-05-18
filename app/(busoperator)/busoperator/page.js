@@ -1,11 +1,20 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useBusOperatorContext } from "@/context/BusOperatorContext";
 import { useRouter } from "next/navigation";
+<<<<<<< HEAD
 
 export default function BusDashboard() {
+=======
+
+
+
+export default function BusDashboard() {
+
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -26,11 +35,25 @@ export default function BusDashboard() {
     }
   }, [user, router]);
 
+    // Check login and fetch busses 
+  useEffect(() => {
+    if (user === false) {
+      router.push("/busoperator/login");
+    } else if (user) {
+      fetchBuses(); // fetch buses from Supabase
+    }
+  }, [user, router]);
+
+  // useEffect(() => {
+  //   fetchBuses(); // Refetch buses on mount
+  // }, []);
+
   const handleChange = (e) => {
     setNewBus({ ...newBus, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" }); // clear error on change
   };
 
+<<<<<<< HEAD
   const validateFields = () => {
     const newErrors = {};
     if (!newBus.name) newErrors.name = "Enter bus name";
@@ -60,6 +83,38 @@ export default function BusDashboard() {
     setErrors({});
   };
 
+=======
+  const handleAddBus = async () => {
+    if (newBus.name && newBus.departure && newBus.arrival && newBus.from && newBus.to && newBus.seats) {
+
+// { name: "", departure: "", arrival: "", from: "", to: "", seats: "" }
+
+      // await addBus({ ...newBus, seats: Number(newBus.seats) });
+      // await addBus({
+      //   name : newBus.name,
+      //   departure : newBus.departure,
+      //   arrival : newBus.arrival,
+      //   from_location : newBus.from,
+      //   to_location : newBus.to,
+      //   seats : Number(newBus.seats),
+      //   bus_operator_id : user.id
+      // })
+
+  await addBus({
+    name: newBus.name,
+    departure: ${newBus.departure}:00,
+    arrival: ${newBus.arrival}:00,
+    from_location: newBus.from,
+    to_location: newBus.to,
+    seats: Number(newBus.seats),
+    bus_operator_id: user.id,
+});
+
+      setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
+    }
+  };
+
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
   const handleDeleteBus = async (id) => {
     await deleteBus(id);
   };
@@ -78,6 +133,7 @@ export default function BusDashboard() {
   };
 
   const handleUpdateBus = async () => {
+<<<<<<< HEAD
     if (!validateFields()) return;
 
     await updateBus(editingBus.id, {
@@ -89,6 +145,9 @@ export default function BusDashboard() {
       seats: Number(newBus.seats),
     });
 
+=======
+    await updateBus(editingBus.id, { ...newBus, seats: Number(newBus.seats) });
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     setEditingBus(null);
     setNewBus({ name: "", departure: "", arrival: "", from: "", to: "", seats: "" });
     setErrors({});
@@ -102,7 +161,7 @@ export default function BusDashboard() {
       passengerName: "Demo User",
     };
     setBookings([...bookings, booking]);
-    setNotifications([...notifications, `📢 New booking on ${bus.name} by ${booking.passengerName}`]);
+    setNotifications([...notifications, 📢 New booking on ${bus.name} by ${booking.passengerName}]);
   };
 
   return (
@@ -189,14 +248,22 @@ export default function BusDashboard() {
         ))}
       </div>
 
+<<<<<<< HEAD
       <div className="mt-8 flex justify-end">
+=======
+       <div className="mt-8 flex justify-end">
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
         <button
           onClick={signOut}
           className="bg-red-600 text-white px-4 py-2 rounded"
         >
           Log out
         </button>
+<<<<<<< HEAD
       </div>
+=======
+        </div>
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     </div>
   );
 }
@@ -204,6 +271,7 @@ export default function BusDashboard() {
 
 
 
+<<<<<<< HEAD
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -501,3 +569,5 @@ export default function BusDashboard() {
 // //     </div>
 // //   );
 // // }
+=======
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499

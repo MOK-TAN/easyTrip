@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,22 +10,46 @@ export default function HotelOwnerDashboard() {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
+<<<<<<< HEAD
   const { hotels, fetchHotels, addHotel, updateHotel, deleteHotel } = useHotelOwnerContext();
+=======
+  const {
+    hotels,
+    fetchHotels,
+    addHotel,
+    updateHotel,
+    deleteHotel
+  } = useHotelOwnerContext();
+
+  console.log("data hotel", user);
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
 
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     price: "",
+<<<<<<< HEAD
     description: ""
   });
   const [errors, setErrors] = useState({});
   const [editingHotelId, setEditingHotelId] = useState(null);
 
+=======
+    description: "" // Add description field here
+  });
+  const [editingHotelId, setEditingHotelId] = useState(null);
+
+  // Check login and fetch hotels
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
   useEffect(() => {
     if (user === false) {
       router.push("/hotelowner/login");
     } else if (user) {
+<<<<<<< HEAD
       fetchHotels();
+=======
+      fetchHotels(); // fetch hotels from Supabase
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     }
   }, [user, router]);
 
@@ -34,6 +59,7 @@ export default function HotelOwnerDashboard() {
     setErrors({ ...errors, [name]: "" }); // Clear error on change
   };
 
+<<<<<<< HEAD
   const validateFields = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Enter hotel name";
@@ -46,13 +72,22 @@ export default function HotelOwnerDashboard() {
 
   const handleAddHotel = async () => {
     if (!validateFields()) return;
+=======
+  const handleAddHotel = async () => {
+    if (!formData.name || !formData.location || !formData.price || !formData.description) return;
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
 
     await addHotel({
       name: formData.name,
       location: formData.location,
       price: parseFloat(formData.price),
+<<<<<<< HEAD
       description: formData.description,
       hotel_owner_id: user.id
+=======
+      description: formData.description, // Add description to hotel
+      hotel_owner_id : user.id
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     });
 
     setFormData({ name: "", location: "", price: "", description: "" });
@@ -64,18 +99,29 @@ export default function HotelOwnerDashboard() {
       name: hotel.name,
       location: hotel.location,
       price: hotel.price.toString(),
+<<<<<<< HEAD
       description: hotel.description
+=======
+      description: hotel.description // Set description when editing
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     });
   };
 
   const handleUpdateHotel = async () => {
+<<<<<<< HEAD
     if (!validateFields()) return;
 
+=======
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     await updateHotel(editingHotelId, {
       name: formData.name,
       location: formData.location,
       price: parseFloat(formData.price),
+<<<<<<< HEAD
       description: formData.description
+=======
+      description: formData.description // Update description
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
     });
 
     setFormData({ name: "", location: "", price: "", description: "" });
@@ -95,6 +141,7 @@ export default function HotelOwnerDashboard() {
           {editingHotelId ? "Edit Hotel" : "Add Hotel"}
         </h2>
         <div className="grid grid-cols-2 gap-4">
+<<<<<<< HEAD
           <div>
             <input
               className="border p-2 rounded w-full"
@@ -136,6 +183,37 @@ export default function HotelOwnerDashboard() {
             />
             {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
           </div>
+=======
+          <input
+            className="border p-2 rounded"
+            placeholder="Hotel Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+          />
+          <input
+            className="border p-2 rounded"
+            type="number"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            placeholder="Price"
+          />
+          <textarea
+            className="border p-2 rounded col-span-2"
+            placeholder="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          />
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded col-span-2"
             onClick={editingHotelId ? handleUpdateHotel : handleAddHotel}
@@ -157,7 +235,11 @@ export default function HotelOwnerDashboard() {
                 <h3 className="font-semibold text-gray-900">{hotel.name}</h3>
                 <p className="text-sm text-gray-600">Location: {hotel.location}</p>
                 <p className="text-sm text-gray-600">Price: ${hotel.price}</p>
+<<<<<<< HEAD
                 <p className="text-sm text-gray-600">Description: {hotel.description}</p>
+=======
+                <p className="text-sm text-gray-600">Description: {hotel.description}</p> {/* Display description */}
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
               </div>
               <div className="flex space-x-4">
                 <button
@@ -190,6 +272,7 @@ export default function HotelOwnerDashboard() {
   );
 }
 
+<<<<<<< HEAD
 
 
 // export default function HotelOwnerDashboard() {
@@ -450,3 +533,5 @@ export default function HotelOwnerDashboard() {
 //     </div>
 //   );
 // }
+=======
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499

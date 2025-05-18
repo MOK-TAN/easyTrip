@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // context/BusOperatorContext.js
+=======
+
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
 "use client";
 import { createContext, useState, useContext, useEffect } from "react";
 import { supabase } from '../supabase/supabaseClient';
@@ -102,6 +106,7 @@ export const BusOperatorProvider = ({ children }) => {
   );
 };
 
+
 export const useBusOperatorContext = () => useContext(BusOperatorContext);
 
 
@@ -112,6 +117,7 @@ export const useBusOperatorContext = () => useContext(BusOperatorContext);
 
 
 
+<<<<<<< HEAD
 // // context/BusOperatorContext.js
 // import { createContext, useState, useContext } from "react";
 
@@ -135,3 +141,5 @@ export const useBusOperatorContext = () => useContext(BusOperatorContext);
 // };
 
 // export const useBusOperatorContext = () => useContext(BusOperatorContext);
+=======
+>>>>>>> c0ca7e2710401d936051c474a5be53dddc4f7499
