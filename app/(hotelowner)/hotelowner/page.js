@@ -25,9 +25,13 @@ export default function HotelOwnerDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [bookings, setBookings] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewResponse, setReviewResponse] = useState({});
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
   const [noHotelsMessage, setNoHotelsMessage] = useState("");
+  const [showReviews, setShowReviews] = useState({}); // Toggle reviews per hotel
 
   useEffect(() => {
     if (user === false) {
@@ -35,7 +39,7 @@ export default function HotelOwnerDashboard() {
     } else if (user) {
       const fetchAllData = async () => {
         try {
-          const [hotelsResult, notificationsResult, hotelIdsResult] = await Promise.all([
+          const [hotelsResult, notificationsResult, reviewsResult, hotelIdsResult] = await Promise.all([
             fetchHotels().catch(err => {
               console.error("fetchHotels error:", err);
               return { error: err, data: [] };
@@ -45,6 +49,30 @@ export default function HotelOwnerDashboard() {
               .select("id, message, is_read, created_at")
               .eq("recipient_id", user.id)
               .order("created_at", { ascending: false }),
+            supabase
+              .from("hotels")
+              .select("id")
+              .eq("hotel_owner_id", user.id)
+              .then(async ({ data: myHotels, error }) => {
+                if (error) {
+                  console.error("Error fetching hotel IDs for reviews:", error.message);
+                  return { data: [] };
+                }
+                const hotelIds = (myHotels || []).map(h => h.id);
+                if (!hotelIds.length) return { data: [] };
+                // return supabase
+                //   .from("reviews")
+                //   .select("*, users(full_name), hotels(name)")
+                //   .in("hotel_id", hotelIds)
+                //   .order("created_at", { ascending: false });
+
+                return supabase
+                  .from("reviews")
+                  .select("*, users(full_name), hotels(name, images)")
+                  .in("hotel_id", hotelIds)
+                  .order("created_at", { ascending: false });
+
+              }),
             supabase
               .from("hotels")
               .select("id")
@@ -60,10 +88,19 @@ export default function HotelOwnerDashboard() {
           }
           setLoadingNotifications(false);
 
+          setLoadingReviews(true);
+          if (reviewsResult.error) {
+            console.error("Error fetching reviews:", reviewsResult.error.message);
+            setReviews([]);
+          } else {
+            setReviews(reviewsResult.data || []);
+          }
+          setLoadingReviews(false);
+
           setLoadingBookings(true);
           const hotelIds = (hotelIdsResult.data || []).map(h => h.id);
           if (hotelIds.length) {
-            const { data: bookingsData, error: bookingsError } = await supabase
+const { data: bookingsData, error: bookingsError } = await supabase
               .from("hotel_bookings")
               .select(`
                 id,
@@ -98,6 +135,7 @@ export default function HotelOwnerDashboard() {
           console.error("Error in fetchAllData:", error.message);
           setLoadingBookings(false);
           setLoadingNotifications(false);
+          setLoadingReviews(false);
         }
       };
 
@@ -232,7 +270,7 @@ export default function HotelOwnerDashboard() {
     }
   };
 
-  const handleApproveBooking = async (bookingId, userId, agentId, hotelName) => {
+    const handleApproveBooking = async (bookingId, userId, agentId, hotelName) => {
     const { error } = await supabase
       .from("hotel_bookings")
       .update({ status: "Approved" })
@@ -350,6 +388,56 @@ export default function HotelOwnerDashboard() {
     }
   };
 
+
+
+  const handleRespondToReview = async (reviewId) => {
+    const response = reviewResponse[reviewId];
+    if (!response) return;
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .update({ owner_response: response })
+      .eq("id", reviewId)
+      .select("user_id, hotel_id")
+      .single();
+
+    if (error) {
+      console.error("Error responding to review:", error.message);
+    } else {
+      setReviewResponse((prev) => ({ ...prev, [reviewId]: "" }));
+      const hotelIds = hotels.map(h => h.id);
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("*, users(full_name), hotels(name)")
+        .in("hotel_id", hotelIds)
+        .order("created_at", { ascending: false });
+      if (reviewsError) {
+        console.error("Error refetching reviews:", reviewsError.message);
+        setReviews([]);
+      } else {
+        setReviews(reviewsData || []);
+      }
+
+      if (data?.user_id) {
+        let hotelName = "";
+        if (data?.hotel_id) {
+          const { data: hotel } = await supabase
+            .from("hotels")
+            .select("name")
+            .eq("id", data.hotel_id)
+            .single();
+          hotelName = hotel?.name || "";
+        }
+
+        await supabase.from("notifications").insert({
+          recipient_id: data.user_id,
+          type: "review_response",
+          message: `Hotel owner responded to your review${hotelName ? ` for ${hotelName}` : ""}.`,
+        });
+      }
+    }
+  };
+
   const handleCancelHotelForm = () => {
     setFormData({ name: "", location: "", price: "", description: "", room_type: "Standard", images: [] });
     setErrors({});
@@ -357,62 +445,28 @@ export default function HotelOwnerDashboard() {
     setIsHotelModalOpen(false);
   };
 
-	
-const checkBooking = async () => {
-setBookings([]);
- const { data, error: bookingsError } = await supabase
-      .from("hotel_bookings")
-      .select(`
-        id,
-        user_id,
-        hotel_id,
-        room_type,
-        check_in,
-        check_out,
-        status,
-        agent_id,
-        customer_name,
-        customer_contact,
-        created_at,
-        users!hotel_bookings_user_id_fkey(full_name),
-        hotels(name)
-      `)
-      .in("hotel_id", hotelIds)
-      .order("created_at", { ascending: false });
-}
+  const toggleReviews = (hotelId) => {
+    setShowReviews((prev) => ({
+      ...prev,
+      [hotelId]: !prev[hotelId],
+    }));
+  };
 
+  const run= ()=> {
+    setErrors({});
+    setEditingHotelId(null);
+  }
 
-const uncheck = async () => {
-setBookings([]);
- const { data, error: bookingsError } = await supabase
-      .from("hotel_bookings")
-      .select(`
-        id,
-        user_id,
-        hotel_id,
-        room_type,
-        check_in,
-        check_out,
-        status,
-        agent_id,
-        customer_name,
-        customer_contact,
-        created_at,
-        users!hotel_bookings_user_id_fkey(full_name),
-        hotels(name)
-      `)
-      .in("hotel_id", hotelIds)
-      .order("created_at", { ascending: false });
-}
   return (
-    <div className="min-h-screen bg-gray-100">
+
+      <div className="min-h-screen bg-gray-100">
       {/* Navigation Bar */}
       <nav className="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
             {user && (
               <span className="text-sm font-medium">
-                Welcome, {user.user_metadata?.full_name || "Hotel Owner"}
+                Welcome, {user.full_name || "Hotel Owner"}
               </span>
             )}
           </div>
@@ -462,6 +516,9 @@ setBookings([]);
             </div>
             <a href="#bookings" className="text-sm font-medium hover:text-indigo-200 transition-colors">
               Bookings
+            </a>
+            <a href="#reviews" className="text-sm font-medium hover:text-indigo-200 transition-colors">
+              Reviews
             </a>
             <button
               onClick={signOut}
@@ -632,7 +689,7 @@ setBookings([]);
                     <div className="mt-4 flex space-x-2">
                       <button
                         onClick={() => handleEditHotel(hotel)}
-                        className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 text-sm transition-colors"
+                        className = "bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 text-sm transition-colors"
                       >
                         Edit
                       </button>
@@ -642,7 +699,67 @@ setBookings([]);
                       >
                         Delete
                       </button>
+                      <button
+                        onClick={() => toggleReviews(hotel.id)}
+                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm transition-colors"
+                      >
+                        Reviews ({reviews.filter((r) => r.hotel_id === hotel.id).length})
+                      </button>
                     </div>
+                    {showReviews[hotel.id] && (
+                      <div className="mt-4 border-t border-gray-100 pt-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Reviews</h4>
+                        {reviews.filter((r) => r.hotel_id === hotel.id).length === 0 ? (
+                          <p className="text-gray-600 text-sm">No reviews for this hotel.</p>
+                        ) : (
+                          reviews
+                            .filter((r) => r.hotel_id === hotel.id)
+                            .map((review) => (
+                              <div key={review.id} className="bg-gray-50 p-4 rounded-lg mb-2">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <span className="font-semibold text-gray-800">
+                                      {review.users?.full_name || "User"}
+                                    </span>
+                                    <span className="ml-2 text-yellow-500">{review.rating}★</span>
+                                  </div>
+                                  <span className="text-xs text-gray-500">
+                                    {review.created_at?.slice(0, 10)}
+                                  </span>
+                                </div>
+                                <div className="mt-2 text-gray-800 text-sm">{review.comment}</div>
+                                {review.owner_response ? (
+                                  <div className="mt-2 text-sm text-indigo-700">
+                                    <span className="font-semibold">Your response:</span>{" "}
+                                    {review.owner_response}
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 flex items-center space-x-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Write a response..."
+                                      value={reviewResponse[review.id] || ""}
+                                      onChange={(e) =>
+                                        setReviewResponse((prev) => ({
+                                          ...prev,
+                                          [review.id]: e.target.value,
+                                        }))
+                                      }
+                                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm w-2/3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                    <button
+                                      onClick={() => handleRespondToReview(review.id)}
+                                      className="text-sm text-indigo-600 hover:underline"
+                                    >
+                                      Respond
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -737,6 +854,79 @@ setBookings([]);
             </div>
           )}
         </section>
+
+        {/* Reviews Section */}
+        <section id="reviews">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Hotel Reviews</h2>
+          <div className="space-y-4">
+            {loadingReviews ? (
+              <p className="text-gray-600 text-sm">Loading reviews...</p>
+            ) : reviews.length === 0 ? (
+              <p className="text-gray-600 text-sm">No reviews for your hotels yet.</p>
+            ) : (
+              reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="flex flex-col md:flex-row items-start">
+                    <div className="w-24 h-24 mb-4 md:mb-0 md:mr-4 flex-shrink-0">
+                      <img
+                        src={review.hotels?.images?.[0] || "/default-hotel.jpg"}
+                        alt="Hotel"
+                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start md:items-center flex-wrap">
+                        <div className="text-sm">
+                          <div className="font-semibold text-gray-800">
+                            {review.users?.full_name || "User"}
+                            <span className="ml-2 text-yellow-500">{review.rating}★</span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {review.hotels?.name && `Hotel: ${review.hotels.name}`}
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-400 mt-1 md:mt-0">
+                          {review.created_at?.slice(0, 10)}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-800">{review.comment}</div>
+                      {review.owner_response ? (
+                        <div className="mt-2 text-sm text-indigo-700">
+                          <span className="font-semibold">Your response:</span>{" "}
+                          {review.owner_response}
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
+                          <input
+                            type="text"
+                            placeholder="Write a response..."
+                            value={reviewResponse[review.id] || ""}
+                            onChange={(e) =>
+                              setReviewResponse((prev) => ({
+                                ...prev,
+                                [review.id]: e.target.value,
+                              }))
+                            }
+                            className="border border-gray-300 rounded-lg px-3 py-1 text-sm w-full md:w-2/3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <button
+                            onClick={() => handleRespondToReview(review.id)}
+                            className="text-sm text-indigo-600 hover:underline"
+                          >
+                            Respond
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
       </div>
 
       {/* Custom Animation Styles */}
@@ -769,5 +959,6 @@ setBookings([]);
         }
       `}</style>
     </div>
-  );
+
+      );
 }
