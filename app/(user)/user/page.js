@@ -14,6 +14,8 @@ export default function UserDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [bookedItems, setBookedItems] = useState({ hotels: {}, buses: {} });
+  const [showWishlist, setShowWishlist] = useState(false);
+  const [wishlist, setWishlist] = useState({ hotels: [], buses: [] });
 
   // Review states for hotels
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -47,8 +49,16 @@ export default function UserDashboard() {
       fetchBuses();
       fetchBookings();
       fetchNotifications();
+      const savedWishlist = localStorage.getItem("wishlist");
+      if (savedWishlist) {
+        setWishlist(JSON.parse(savedWishlist));
+      }
     }
   }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
 
   useEffect(() => {
     if (user) {
@@ -74,6 +84,34 @@ export default function UserDashboard() {
     setPriceFilter("");
     setLocationFilter("");
     setRoomTypeFilter("");
+  };
+
+  const addToWishlist = (item, type) => {
+    setWishlist((prev) => {
+      const updatedWishlist = { ...prev };
+      if (type === "hotel") {
+        if (!prev.hotels.find((h) => h.id === item.id)) {
+          updatedWishlist.hotels = [...prev.hotels, item];
+        }
+      } else {
+        if (!prev.buses.find((b) => b.id === item.id)) {
+          updatedWishlist.buses = [...prev.buses, item];
+        }
+      }
+      return updatedWishlist;
+    });
+  };
+
+  const removeFromWishlist = (itemId, type) => {
+    setWishlist((prev) => {
+      const updatedWishlist = { ...prev };
+      if (type === "hotel") {
+        updatedWishlist.hotels = prev.hotels.filter((h) => h.id !== itemId);
+      } else {
+        updatedWishlist.buses = prev.buses.filter((b) => b.id !== itemId);
+      }
+      return updatedWishlist;
+    });
   };
 
   const openReviewModal = async (hotel) => {
@@ -384,6 +422,20 @@ export default function UserDashboard() {
                 My Bookings
               </button>
               <button
+                onClick={() => setShowWishlist(!showWishlist)}
+                className="relative flex items-center text-gray-600 hover:text-indigo-600 text-sm font-medium transition-colors"
+              >
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Wishlist
+                {wishlist.hotels.length + wishlist.buses.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                    {wishlist.hotels.length + wishlist.buses.length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={signOut}
                 className="flex items-center text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
               >
@@ -411,6 +463,61 @@ export default function UserDashboard() {
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+      )}
+
+      {/* Wishlist Dropdown */}
+      {showWishlist && (
+        <div className="absolute right-4 top-16 bg-white shadow-lg rounded-xl w-80 p-5 z-50 animate-fade-in">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist</h3>
+          {wishlist.hotels.length + wishlist.buses.length === 0 ? (
+            <p className="text-sm text-gray-500">No items in wishlist.</p>
+          ) : (
+            <div className="space-y-4">
+              {wishlist.hotels.map((hotel) => (
+                <div key={hotel.id} className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-semibold text-gray-900">{hotel.name}</p>
+                  <p className="text-sm text-gray-600">{hotel.location}</p>
+                  <div className="mt-2 flex justify-between">
+                    <button
+                      onClick={() => openPaymentDialog(hotel, "hotel")}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Book Now
+                    </button>
+                    <button
+                      onClick={() => removeFromWishlist(hotel.id, "hotel")}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {wishlist.buses.map((bus) => (
+                <div key={bus.id} className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-semibold text-gray-900">{bus.name}</p>
+                  <p className="text-sm text-gray-600">
+                    {bus.from_location} ➝ {bus.to_location}
+                  </p>
+                  <div className="mt-2 flex justify-between">
+                    <button
+                      onClick={() => openPaymentDialog(bus, "bus")}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Book Now
+                    </button>
+                    <button
+                      onClick={() => removeFromWishlist(bus.id, "bus")}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -619,6 +726,20 @@ export default function UserDashboard() {
                       </svg>
                       Review
                     </button>
+                    <button
+                      onClick={() => addToWishlist(hotel, "hotel")}
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        wishlist.hotels.find((h) => h.id === hotel.id)
+                          ? "bg-purple-100 text-purple-600 cursor-not-allowed"
+                          : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                      }`}
+                      disabled={wishlist.hotels.find((h) => h.id === hotel.id)}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      {wishlist.hotels.find((h) => h.id === hotel.id) ? "Wishlisted" : "Add to Wishlist"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -744,9 +865,23 @@ export default function UserDashboard() {
                       className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium hover:bg-blue-200 transition-colors"
                     >
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.marshaling 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                       </svg>
                       Review
+                    </button>
+                    <button
+                      onClick={() => addToWishlist(bus, "bus")}
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        wishlist.buses.find((b) => b.id === bus.id)
+                          ? "bg-purple-100 text-purple-600 cursor-not-allowed"
+                          : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                      }`}
+                      disabled={wishlist.buses.find((b) => b.id === bus.id)}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      {wishlist.buses.find((b) => b.id === bus.id) ? "Wishlisted" : "Add to Wishlist"}
                     </button>
                   </div>
                 </div>
