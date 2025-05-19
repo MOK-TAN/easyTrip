@@ -25,6 +25,13 @@ export default function BusOperatorDashboard() {
   const [bookings, setBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [staff, setStaff] = useState([]);
+  const [staffUserId, setStaffUserId] = useState("");
+  const [staffRole, setStaffRole] = useState("driver");
+  const [selectedBusId, setSelectedBusId] = useState("");
+  const [busReviews, setBusReviews] = useState([]);
+  const [responseText, setResponseText] = useState({});
+  const [respondingReviewId, setRespondingReviewId] = useState(null);
   const [showBusForm, setShowBusForm] = useState(false);
   const [busForm, setBusForm] = useState(initialBusForm);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
@@ -90,6 +97,36 @@ export default function BusOperatorDashboard() {
               setBookings(bookingsData || []);
             }
           }
+
+          // Fetch staff and reviews concurrently
+          if (busesData.data?.length) {
+            const busIds = busesData.data.map(b => b.id);
+            const [staffData, reviewsData] = await Promise.all([
+              supabase
+                .from("bus_staff")
+                .select("*, users(full_name)")
+                .in("bus_id", busIds),
+              supabase
+                .from("bus_reviews")
+                .select("*, users(full_name)")
+                .in("bus_id", busIds)
+                .order("created_at", { ascending: false }),
+            ]);
+
+            if (staffData.error) {
+              console.error("Error fetching staff:", staffData.error.message);
+              setStaff([]);
+            } else {
+              setStaff(staffData.data || []);
+            }
+
+            if (reviewsData.error) {
+              console.error("Error fetching reviews:", reviewsData.error.message);
+              setBusReviews([]);
+            } else {
+              setBusReviews(reviewsData.data || []);
+            }
+          }
         } catch (error) {
           console.error("Error in fetchAllData:", error.message);
         }
@@ -99,6 +136,16 @@ export default function BusOperatorDashboard() {
     }
     // eslint-disable-next-line
   }, [user, router]);
+
+const runagain =async () => {
+	const response = responseText[reviewId];
+    if (!response) return;
+
+    const { error } = await supabase
+      .from("bus_reviews")
+      .update({ owner_response: response })
+      .eq("id", reviewId);
+}
 
   // Approve booking and notify user
   const handleApproveBooking = async (bookingId, userId, busName) => {
@@ -202,6 +249,35 @@ export default function BusOperatorDashboard() {
     }
   };
 
+  // Respond to review
+  const handleRespondToReview = async (reviewId) => {
+    const response = responseText[reviewId];
+    if (!response) return;
+
+    const { error } = await supabase
+      .from("bus_reviews")
+      .update({ owner_response: response })
+      .eq("id", reviewId);
+    if (!error) {
+      setResponseText((prev) => ({ ...prev, [reviewId]: "" }));
+      setRespondingReviewId(null);
+      const busIds = buses.map(b => b.id);
+      const { data, error: reviewsError } = await supabase
+        .from("bus_reviews")
+        .select("*, users(full_name)")
+        .in("bus_id", busIds)
+        .order("created_at", { ascending: false });
+      if (reviewsError) {
+        console.error("Error refetching reviews:", reviewsError.message);
+        setBusReviews([]);
+      } else {
+        setBusReviews(data || []);
+      }
+    } else {
+      console.error("Error responding to review:", error.message);
+    }
+  };
+
   // Add Bus Handlers
   const handleBusFormChange = (e) => {
     const { name, value } = e.target;
@@ -244,7 +320,8 @@ export default function BusOperatorDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-gray-100 min-h-screen">
+
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 bg-gray-100 min-h-screen">
       {/* Navigation Bar */}
       <nav className="flex items-center justify-between mb-8 bg-white border-b border-gray-200 px-6 py-4 rounded-xl shadow-md sticky top-0 z-50">
         <span className="text-2xl font-bold text-indigo-600 flex items-center">
@@ -272,6 +349,20 @@ export default function BusOperatorDashboard() {
               />
             </svg>
             Bookings
+          </button>
+          {/* Reviews */}
+          <button
+            className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors flex items-center"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+              />
+            </svg>
+            Reviews
           </button>
           {/* Notifications */}
           <div className="relative">
@@ -440,6 +531,14 @@ export default function BusOperatorDashboard() {
             </button>
           </form>
         )}
+        {/* Commented out original list display */}
+        {/* <ul>
+          {buses.map((b) => (
+            <li key={b.id} className="mb-2 border-b pb-2">
+              <span className="font-bold">{b.name}</span> | {b.from_location} ➝ {b.to_location} | Seats: {b.seats} | Driver: {b.driver_name || "N/A"} | Staff: {b.staff_count ?? 0}
+            </li>
+          ))}
+        </ul> */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {buses.map((b) => (
             <div
@@ -478,7 +577,7 @@ export default function BusOperatorDashboard() {
               <p className="text-sm text-gray-700 flex items-center">
                 <svg className="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
-                    strokeLinecap="round"
+                    strokeLinecap="round çocuklar"
                     strokeLinejoin="round"
                     strokeWidth="2"
                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
@@ -638,6 +737,80 @@ export default function BusOperatorDashboard() {
         )}
       </section>
 
+      {/* Bus Reviews Section */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+          <svg className="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+            />
+          </svg>
+          Bus Reviews
+        </h2>
+        <div className="grid gap-4">
+          {busReviews.map((r) => (
+            <div
+              key={r.id}
+              className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="flex items-center mb-2">
+                <span className="font-semibold text-gray-800 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m-12 4h12m-12 0l4 4m-4-4l4-4"
+                    />
+                  </svg>
+                  {buses.find((b) => b.id === r.bus_id)?.name}
+                </span>
+                <span className="ml-2 text-yellow-500">⭐ {r.rating}★</span>
+              </div>
+              <div className="text-sm text-gray-700">{r.comment}</div>
+              <div className="text-xs text-gray-500 mt-1 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                By: {r.users?.full_name || r.user_id}
+              </div>
+              {r.owner_response && (
+                <div className="text-sm text-indigo-700 mt-2">
+                  <span className="font-semibold">Operator:</span> {r.owner_response}
+                </div>
+              )}
+              {!r.owner_response && (
+                <div className="mt-3 flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
+                  <textarea
+                    className="border border-gray-300 rounded-lg w-full p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Write a response..."
+                    value={responseText[r.id] || ""}
+                    onChange={(e) =>
+                      setResponseText((prev) => ({ ...prev, [r.id]: e.target.value }))
+                    }
+                  />
+                  <button
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+                    onClick={() => handleRespondToReview(r.id)}
+                    disabled={!responseText[r.id] || respondingReviewId === r.id}
+                  >
+                    Respond
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Custom Animation Styles */}
       <style jsx>{`
         @keyframes fadeIn {
@@ -667,6 +840,4 @@ export default function BusOperatorDashboard() {
           animation: slideUp 0.5s ease-out;
         }
       `}</style>
-    </div>
-  );
-}
+    </div>)}
