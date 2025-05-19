@@ -15,6 +15,20 @@ export default function UserDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [bookedItems, setBookedItems] = useState({ hotels: {}, buses: {} });
 
+  // Review states for hotels
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [previousReviews, setPreviousReviews] = useState([]);
+
+  // Review states for buses
+  const [showBusReviewModal, setShowBusReviewModal] = useState(false);
+  const [selectedBus, setSelectedBus] = useState(null);
+  const [busReviewText, setBusReviewText] = useState("");
+  const [busRating, setBusRating] = useState(5);
+  const [previousBusReviews, setPreviousBusReviews] = useState([]);
+
   // Payment dialog states
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentType, setPaymentType] = useState("online");
@@ -60,6 +74,112 @@ export default function UserDashboard() {
     setPriceFilter("");
     setLocationFilter("");
     setRoomTypeFilter("");
+  };
+
+  const openReviewModal = async (hotel) => {
+    setSelectedHotel(hotel);
+    setShowReviewModal(true);
+    setReviewText("");
+    setRating(5);
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("*, users(full_name)")
+      .eq("hotel_id", hotel.id)
+      .order("created_at", { ascending: false });
+    setPreviousReviews(data || []);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedHotel || !rating || !reviewText) return;
+
+    const { data: review, error } = await supabase
+      .from("reviews")
+      .insert({
+        hotel_id: selectedHotel.id,
+        user_id: user.id,
+        rating,
+        comment: reviewText,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      alert("Failed to submit review");
+      return;
+    }
+
+    const { data: hotelData } = await supabase
+      .from("hotels")
+      .select("hotel_owner_id")
+      .eq("id", selectedHotel.id)
+      .single();
+
+    if (hotelData?.hotel_owner_id) {
+      const { error: notifError } = await supabase.from("notifications").insert({
+        recipient_id: hotelData.hotel_owner_id,
+        type: "review",
+        message: `New review for ${selectedHotel.name} by ${user.user_metadata.full_name}`,
+      });
+      if (notifError) {
+        console.error("Notification insert error:", notifError.message);
+      }
+    }
+
+    setShowReviewModal(false);
+  };
+
+  const openBusReviewModal = async (bus) => {
+    setSelectedBus(bus);
+    setShowBusReviewModal(true);
+    setBusReviewText("");
+    setBusRating(5);
+
+    const { data, error } = await supabase
+      .from("bus_reviews")
+      .select("*, users(full_name)")
+      .eq("bus_id", bus.id)
+      .order("created_at", { ascending: false });
+    setPreviousBusReviews(data || []);
+  };
+
+  const handleSubmitBusReview = async () => {
+    if (!selectedBus || !busRating || !busReviewText) return;
+
+    const { data: review, error } = await supabase
+      .from("bus_reviews")
+      .insert({
+        bus_id: selectedBus.id,
+        user_id: user.id,
+        rating: busRating,
+        comment: busReviewText,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      alert("Failed to submit bus review");
+      return;
+    }
+
+    const { data: busData } = await supabase
+      .from("buses")
+      .select("bus_operator_id")
+      .eq("id", selectedBus.id)
+      .single();
+
+    if (busData?.bus_operator_id) {
+      const { error: notifError } = await supabase.from("notifications").insert({
+        recipient_id: busData.bus_operator_id,
+        type: "bus_review",
+        message: `New review for ${selectedBus.name} by ${user.user_metadata.full_name}`,
+      });
+      if (notifError) {
+        console.error("Notification insert error:", notifError.message);
+      }
+    }
+
+    setShowBusReviewModal(false);
   };
 
   const fetchBuses = async () => {
@@ -305,16 +425,18 @@ export default function UserDashboard() {
             ) : (
               <ul className="space-y-4">
                 {bookings.map((booking) => (
-                  <li key={booking.id} className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium text-gray-900">
-                      {booking.hotels?.name || booking.buses?.name}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {booking.hotels
-                        ? `Location: ${booking.hotels.location}`
-                        : `Route: ${booking.buses.from_location} ➝ ${booking.buses.to_location}`}
-                    </p>
-                    <p className="text-sm text-gray-600">Status: {booking.status}</p>
+                  <li key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {booking.hotels?.name || booking.buses?.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {booking.hotels
+                          ? `Location: ${booking.hotels.location}`
+                          : `Route: ${booking.buses.from_location} ➝ ${booking.buses.to_location}`}
+                      </p>
+                      <p className="text-sm text-gray-600">Status: {booking.status}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -473,24 +595,100 @@ export default function UserDashboard() {
                       ${hotel.price}<span className="text-sm font-normal text-gray-500">/night</span>
                     </span>
                   </div>
-                  <button
-                    onClick={() => openPaymentDialog(hotel, "hotel")}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      bookedItems.hotels[hotel.id]
-                        ? "bg-red-100 text-red-600 cursor-not-allowed"
-                        : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
-                    }`}
-                    disabled={bookedItems.hotels[hotel.id]}
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    {bookedItems.hotels[hotel.id] ? "Booked" : "Book Now"}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openPaymentDialog(hotel, "hotel")}
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        bookedItems.hotels[hotel.id]
+                          ? "bg-red-100 text-red-600 cursor-not-allowed"
+                          : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                      }`}
+                      disabled={bookedItems.hotels[hotel.id]}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      {bookedItems.hotels[hotel.id] ? "Booked" : "Book Now"}
+                    </button>
+                    <button
+                      onClick={() => openReviewModal(hotel)}
+                      className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium hover:bg-blue-200 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      Review
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Hotel Review Modal */}
+          {showReviewModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-fade-in">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Reviews for {selectedHotel?.name}</h3>
+                <div className="mb-4 max-h-40 overflow-y-auto">
+                  {previousReviews.length === 0 ? (
+                    <p className="text-sm text-gray-500">No reviews yet.</p>
+                  ) : (
+                    previousReviews.map((r) => (
+                      <div key={r.id} className="mb-3 border-b pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">{r.users?.full_name || "User"}</span>
+                          <span className="text-yellow-500">{r.rating}★</span>
+                        </div>
+                        <div className="text-sm text-gray-600">{r.comment}</div>
+                        {r.owner_response && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            <span className="font-semibold">Owner:</span> {r.owner_response}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+                  <select
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    value={rating}
+                    onChange={(e) => setRating(Number(e.target.value))}
+                  >
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>
+                        {n} Star{n > 1 ? "s" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
+                  <textarea
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowReviewModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    onClick={handleSubmitReview}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Buses Section */}
@@ -526,24 +724,100 @@ export default function UserDashboard() {
                       {bus.departure} - {bus.arrival}
                     </p>
                   </div>
-                  <button
-                    onClick={() => openPaymentDialog(bus, "bus")}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      bookedItems.buses[bus.id]
-                        ? "bg-red-100 text-red-600 cursor-not-allowed"
-                        : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
-                    }`}
-                    disabled={bookedItems.buses[bus.id]}
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    {bookedItems.buses[bus.id] ? "Booked" : "Book Now"}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openPaymentDialog(bus, "bus")}
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        bookedItems.buses[bus.id]
+                          ? "bg-red-100 text-red-600 cursor-not-allowed"
+                          : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                      }`}
+                      disabled={bookedItems.buses[bus.id]}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      {bookedItems.buses[bus.id] ? "Booked" : "Book Now"}
+                    </button>
+                    <button
+                      onClick={() => openBusReviewModal(bus)}
+                      className="flex items-center px-4 py-2 rounded-lg bg-blue-100 text-blue-600 text-sm font-medium hover:bg-blue-200 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.marshaling 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      Review
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Bus Review Modal */}
+          {showBusReviewModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-fade-in">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Reviews for {selectedBus?.name}</h3>
+                <div className="mb-4 max-h-40 overflow-y-auto">
+                  {previousBusReviews.length === 0 ? (
+                    <p className="text-sm text-gray-500">No reviews yet.</p>
+                  ) : (
+                    previousBusReviews.map((r) => (
+                      <div key={r.id} className="mb-3 border-b pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">{r.users?.full_name || "User"}</span>
+                          <span className="text-yellow-500">{r.rating}★</span>
+                        </div>
+                        <div className="text-sm text-gray-600">{r.comment}</div>
+                        {r.owner_response && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            <span className="font-semibold">Operator:</span> {r.owner_response}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+                  <select
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    value={busRating}
+                    onChange={(e) => setBusRating(Number(e.target.value))}
+                  >
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>
+                        {n} Star{n > 1 ? "s" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
+                  <textarea
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    value={busReviewText}
+                    onChange={(e) => setBusReviewText(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    onClick={() => setShowBusReviewModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    onClick={handleSubmitBusReview}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 

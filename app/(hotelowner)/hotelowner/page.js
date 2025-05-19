@@ -103,7 +103,7 @@ export default function HotelOwnerDashboard() {
 
       fetchAllData();
     }
-  }, [user, router, fetchHotels]);
+  }, [user, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -357,6 +357,53 @@ export default function HotelOwnerDashboard() {
     setIsHotelModalOpen(false);
   };
 
+	
+const checkBooking = async () => {
+setBookings([]);
+ const { data, error: bookingsError } = await supabase
+      .from("hotel_bookings")
+      .select(`
+        id,
+        user_id,
+        hotel_id,
+        room_type,
+        check_in,
+        check_out,
+        status,
+        agent_id,
+        customer_name,
+        customer_contact,
+        created_at,
+        users!hotel_bookings_user_id_fkey(full_name),
+        hotels(name)
+      `)
+      .in("hotel_id", hotelIds)
+      .order("created_at", { ascending: false });
+}
+
+
+const uncheck = async () => {
+setBookings([]);
+ const { data, error: bookingsError } = await supabase
+      .from("hotel_bookings")
+      .select(`
+        id,
+        user_id,
+        hotel_id,
+        room_type,
+        check_in,
+        check_out,
+        status,
+        agent_id,
+        customer_name,
+        customer_contact,
+        created_at,
+        users!hotel_bookings_user_id_fkey(full_name),
+        hotels(name)
+      `)
+      .in("hotel_id", hotelIds)
+      .order("created_at", { ascending: false });
+}
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navigation Bar */}
@@ -365,7 +412,7 @@ export default function HotelOwnerDashboard() {
           <div className="flex items-center space-x-4">
             {user && (
               <span className="text-sm font-medium">
-                Welcome, {user.full_name || "Hotel Owner"}
+                Welcome, {user.user_metadata?.full_name || "Hotel Owner"}
               </span>
             )}
           </div>
@@ -678,7 +725,7 @@ export default function HotelOwnerDashboard() {
                               b.hotels?.name || "Unknown Hotel"
                             )
                           }
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                         >
                           Reject
                         </button>
@@ -697,8 +744,7 @@ export default function HotelOwnerDashboard() {
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform녀
-            : translateY(10px);
+            transform: translateY(10px);
           }
           to {
             opacity: 1;
